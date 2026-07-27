@@ -1,0 +1,250 @@
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native'
+import React, { useState, useRef } from 'react'
+import styles from './styles'
+import { LinearGradient } from 'expo-linear-gradient';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Dimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
+const { height } = Dimensions.get('window');
+
+export default function LoginRegister() {
+    const navigation = useNavigation();
+    const [usernameLogin, setUsernameLogin] = useState('');
+    const [passwordLogin, setPasswordLogin] = useState('');
+    const [usernameRegister, setUsernameRegister] = useState('');
+    const [passwordRegister, setPasswordRegister] = useState('');
+    const [confirmPasswordRegister, setConfirmPasswordRegister] = useState('');
+    const [showLogin, setShowLogin] = useState(true);
+    const [loginError, setLoginError] = useState('');
+
+    const handleLogin = () => {
+        if (!usernameLogin.trim() || !passwordLogin.trim()) {
+            setLoginError('يرجى ملء جميع الحقول المطلوبة');
+            Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة');
+            return;
+        }
+
+        setLoginError('');
+        navigation.replace('Home');
+    };
+    const beforeTopAnim = useRef(new Animated.Value(0)).current;
+    const togglePanelTopAnim = useRef(new Animated.Value(0)).current;
+    const togglePanelBottomAnim = useRef(new Animated.Value(0)).current;
+    const formBoxHeightAnim = useRef(new Animated.Value(0)).current;
+    const [showPasswordLogin, setShowPasswordLogin] = useState(false);
+    const [showPasswordRegister, setShowPasswordRegister] = useState(false);
+    const [showConfirmPasswordRegister, setShowConfirmPasswordRegister] = useState(false);
+
+    const beforeTop = beforeTopAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['-270%', '70%'],
+    });
+    const togglePanelTop = togglePanelTopAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '-30%'],
+    });
+    const togglePanelBottom = togglePanelBottomAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['-30%', '0%'],
+    });
+    const formBoxHeight = formBoxHeightAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['125%', '72.5%'],
+    });
+
+    const toggleForm = () => {
+        const toValue = showLogin ? 1 : 0;
+        Animated.parallel([
+            Animated.timing(beforeTopAnim, {
+                toValue,
+                duration: 1800,
+                delay: 0,
+                useNativeDriver: false,
+            }),
+            Animated.timing(togglePanelTopAnim, {
+                toValue,
+                duration: 600,
+                delay: showLogin ? 600 : 1200,
+                useNativeDriver: false,
+            }),
+            Animated.timing(togglePanelBottomAnim, {
+                toValue,
+                duration: 600,
+                delay: showLogin ? 1200 : 600,
+                useNativeDriver: false,
+            }),
+            Animated.timing(formBoxHeightAnim, {
+                toValue,
+                duration:600,
+                delay: 1200,
+                useNativeDriver: false,
+            }),
+        ]).start();
+        setTimeout(() => {
+            setShowLogin(prev => !prev);
+        }, 1200);
+    };
+    return (
+        <LinearGradient
+            colors={['#e2e2e2', '#c9d6ff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.body}
+        >
+            <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <KeyboardAwareScrollView
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        minHeight: height - 60,
+                    }}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                        <Animated.View style={[styles.formBox, { height: formBoxHeight }]}> 
+                            <View style={styles.form}>
+                                {showLogin ? (
+                                    <>
+                                        <Text style={styles.formTitle}>تسجيل الدخول</Text>
+                                        <View style={styles.inputBox}>
+                                            <TextInput 
+                                            style={styles.input} 
+                                            placeholder='اسم المستخدم' 
+                                            textAlign='right' 
+                                            value={usernameLogin} 
+                                            onChangeText={setUsernameLogin}
+                                            required
+                                            />
+                                            <FontAwesome 
+                                            name="user" 
+                                            size={26} 
+                                            color="rgb(136, 136, 136)" 
+                                            style={styles.icon} 
+                                            />
+                                        </View>
+                                        <View style={styles.inputBox}>
+                                            <TextInput 
+                                            style={styles.input} 
+                                            placeholder='كلمة المرور' 
+                                            secureTextEntry={showPasswordLogin ? false : true} 
+                                            textAlign='right' 
+                                            value={passwordLogin} 
+                                            onChangeText={setPasswordLogin}
+                                            required
+                                            />
+                                            <TouchableOpacity
+                                            style={styles.icon}
+                                            onPress={() => setShowPasswordLogin(prev => !prev)}>
+                                                <Ionicons 
+                                                name={showPasswordLogin ? "eye" : "eye-off"} 
+                                                size={26} 
+                                                color="rgb(136, 136, 136)" 
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <TouchableOpacity 
+                                        style={styles.button} 
+                                        onPress={handleLogin} 
+                                        activeOpacity={0.8}
+                                        >
+                                            <Text style={styles.text}>تسجيل الدخول</Text>
+                                        </TouchableOpacity>
+                                        {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+                                        <Text style={styles.paragraph}>فكما التاجر يبيع ويشتري ليربح ويكسب ويكدّس الأموال، كذلك على المؤمن أن يعمل نهارًا وليلًا ليجتني الروح القدس.</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={styles.formTitle}>تسجيل</Text>
+                                        <View style={styles.inputBox}>
+                                            <TextInput 
+                                            style={styles.input} 
+                                            placeholder='اسم المستخدم' 
+                                            textAlign='right' 
+                                            value={usernameRegister} 
+                                            onChangeText={setUsernameRegister} 
+                                            required
+                                            />
+                                            <FontAwesome 
+                                            name="user" 
+                                            size={26} 
+                                            color="rgb(136, 136, 136)" 
+                                            style={styles.icon} 
+                                            />
+                                        </View>
+                                        <View style={styles.inputBox}>
+                                            <TextInput 
+                                            style={styles.input} 
+                                            placeholder='كلمة المرور' 
+                                            secureTextEntry={showPasswordRegister ? false : true} 
+                                            textAlign='right' 
+                                            value={passwordRegister} 
+                                            onChangeText={setPasswordRegister} 
+                                            required
+                                            />
+                                            <TouchableOpacity
+                                            style={styles.icon} 
+                                            onPress={() => setShowPasswordRegister(prev => !prev)}>
+                                                <Ionicons 
+                                                name={showPasswordRegister ? "eye" : "eye-off"} 
+                                                size={26} 
+                                                color="rgb(136, 136, 136)" 
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={styles.inputBox}>
+                                            <TextInput 
+                                            style={styles.input} 
+                                            placeholder='تأكيد كلمة المرور' 
+                                            secureTextEntry={showConfirmPasswordRegister ? false : true} 
+                                            textAlign='right' 
+                                            value={confirmPasswordRegister} 
+                                            onChangeText={setConfirmPasswordRegister} 
+                                            required
+                                            />
+                                            <TouchableOpacity 
+                                            style={styles.icon} 
+                                            onPress={() => setShowConfirmPasswordRegister(prev => !prev)}>
+                                                <Ionicons 
+                                                name={showConfirmPasswordRegister ? "eye" : "eye-off"} 
+                                                size={26} 
+                                                color="rgb(136, 136, 136)" 
+                                                />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <TouchableOpacity 
+                                        style={styles.button} 
+                                        onPress={() => { }} 
+                                        activeOpacity={0.8}
+                                        >
+                                            <Text style={styles.text}>تسجيل</Text>
+                                        </TouchableOpacity>
+                                        <Text style={styles.paragraph}>القدِّيسون ليسوا مخلوقين من مادّةٍ أخرى، بل هم بشرٌ مثلنا تمامًا. الفرق أنَّهم أخذوا مسألة خلاصهم على محمل الجدّ.</Text>
+                                    </>
+                                )}
+                            </View>
+                        </Animated.View>
+                        <View style={styles.toggleBox}>
+                            <Animated.View style={[styles.before, { top: beforeTop }]} />
+                            <Animated.View style={[styles.togglePanel, { top: togglePanelTop } ]}> 
+                                <Text style={styles.toggletitle}>فرقة القديس سيرافيم ساروفسكي</Text>
+                                <Text style={styles.toggleParagraph}>الصف السابع</Text>
+                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8}>
+                                    <Text style={styles.toggleTextButton}>تسجيل</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                            <Animated.View style={[styles.togglePanel, { bottom: togglePanelBottom } ]}> 
+                                <Text style={styles.toggletitle}>فرقة القديس سيرافيم ساروفسكي</Text>
+                                <Text style={styles.toggleParagraph}>الصف السابع</Text>
+                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8}>
+                                    <Text style={styles.toggleTextButton}>تسجيل الدخول</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        </View>
+                </KeyboardAwareScrollView>
+            </ScrollView>
+        </LinearGradient>
+    )
+}
