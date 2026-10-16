@@ -1,0 +1,93 @@
+const mongoose = require('mongoose')
+
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: '',
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    totalPoints: {
+      type: Number,
+      default: 0,
+    },
+    totalEarnedPoints: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalDeductedPoints: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    quizPoints: {
+      type: Number,
+      default: 0,
+    },
+    lastDailyQuestionDate: {
+      type: String,
+      default: '',
+    },
+    answeredDailyQuestionToday: {
+      type: Boolean,
+      default: false,
+    },
+    extraPoints: {
+      type: Number,
+      default: 0,
+    },
+    pointNotifications: {
+      type: [
+        new mongoose.Schema(
+          {
+            amount: { type: Number, required: true },
+            isPositive: { type: Boolean, required: true },
+            isRead: { type: Boolean, default: false },
+            createdAt: { type: Date, default: Date.now },
+          },
+          { _id: true }
+        ),
+      ],
+      default: [],
+    },
+    title: {
+      type: String,
+      default: '',
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin', 'owner'],
+      default: 'user',
+    },
+  },
+  {
+    timestamps: true,
+  }
+)
+
+userSchema.methods.initializePointTotals = function initializePointTotals() {
+  if (this.$isDefault('totalEarnedPoints') && this.$isDefault('totalDeductedPoints')) {
+    const legacyTotal = Number(this.totalPoints) || 0
+    this.totalEarnedPoints = Math.max(legacyTotal, 0)
+    this.totalDeductedPoints = Math.max(-legacyTotal, 0)
+  }
+}
+
+userSchema.pre('validate', function keepPointTotalsConsistent() {
+  this.initializePointTotals()
+  this.totalPoints = this.totalEarnedPoints - this.totalDeductedPoints
+})
+
+module.exports = mongoose.model('User', userSchema)

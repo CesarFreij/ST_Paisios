@@ -7,6 +7,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
+        direction: 'ltr',
         backgroundColor: '#348cb2',
     },
     icon: {
@@ -20,7 +21,7 @@ const styles = StyleSheet.create({
         'height': '33%',
         position: 'absolute',
         bottom: 0,
-        left: 0,
+        start: 0,
     },
     text: {
         position: 'absolute',
@@ -34,105 +35,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
     },
-    statusCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 24,
-        padding: 18,
-        marginHorizontal: 20,
-        marginTop: 18,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 18,
-        elevation: 6,
-    },
-    statusOnline: {
-        borderLeftWidth: 4,
-        borderLeftColor: '#2ecc71',
-    },
-    statusPending: {
-        borderLeftWidth: 4,
-        borderLeftColor: '#f1c40f',
-    },
-    statusOffline: {
-        borderLeftWidth: 4,
-        borderLeftColor: '#e74c3c',
-    },
-    statusHeader: {
-        flexDirection: 'row',
+    homeUserSummary: {
+        position: 'absolute',
+        top: '30%',
+        left: 16,
+        right: 16,
+        zIndex: 2,
         alignItems: 'center',
-        marginBottom: 10,
-    },
-    statusTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        color: '#0b3d91',
-        marginLeft: 12,
-        textAlign: 'right',
-    },
-    statusSubtitle: {
-        fontSize: 15,
-        color: '#63738f',
-        lineHeight: 22,
-        textAlign: 'right',
-        marginBottom: 6,
-    },
-    statusDetails: {
-        fontSize: 14,
-        color: '#4f637d',
-        lineHeight: 20,
-        textAlign: 'right',
-    },
-    scrollArea: {
-        flex: 1,
-    },
-    contentContainer: {
-        paddingBottom: 120,
-    },
-    sheetOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    },
-    sheetBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.32)',
-    },
-    bottomSheet: {
-        backgroundColor: '#ffffff',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 24,
-        paddingTop: 14,
-        paddingBottom: 36,
-        minHeight: 220,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 18,
-        elevation: 10,
-    },
-    sheetHandle: {
-        width: 72,
-        height: 6,
-        borderRadius: 4,
-        backgroundColor: '#d7dbe3',
-        alignSelf: 'center',
-        marginBottom: 16,
-    },
-    sheetTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#0b3d91',
-        textAlign: 'center',
-        marginBottom: 12,
-    },
-    sheetText: {
-        fontSize: 15,
-        color: '#4a5b7b',
-        lineHeight: 24,
-        textAlign: 'right',
-        marginBottom: 10,
     },
     sheetButton: {
         marginTop: 16,
@@ -188,6 +97,7 @@ const styles = StyleSheet.create({
     dailyAnswerText: {
         fontSize: 16,
         color: '#213a71',
+        textAlign: 'right',
     },
     dailyResultBox: {
         marginTop: 18,
@@ -210,6 +120,37 @@ const styles = StyleSheet.create({
     dailyResultSubText: {
         fontSize: 16,
         color: '#63738f',
+        textAlign: 'center',
+    },
+    snackbar: {
+        position: 'absolute',
+        top: 24,
+        left: 20,
+        right: 20,
+        zIndex: 20,
+        elevation: 12,
+        borderRadius: 14,
+        paddingVertical: 15,
+        paddingHorizontal: 18,
+    },
+    snackbarSuccess: {
+        backgroundColor: '#2e7d32',
+    },
+    snackbarWarning: {
+        backgroundColor: '#C62828',
+    },
+    snackbarError: {
+        backgroundColor: '#B71C1C',
+    },
+    snackbarCelebration: {
+        backgroundColor: '#8A5A00',
+        borderWidth: 1,
+        borderColor: '#FFD54F',
+    },
+    snackbarText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '700',
     },
 });
 

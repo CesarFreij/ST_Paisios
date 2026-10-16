@@ -1,0 +1,65 @@
+.page-grid {
+  display: grid;
+  gap: 28px;
+}
+
+.page-header-block {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.page-tag {
+  margin: 0 0 10px;
+  color: #5f6d8b;
+  font-size: 0.95rem;
+}
+
+.page-header-block h2 {
+  font-size: clamp(1.75rem, 2vw, 2.2rem);
+}
+
+.user-detail-card {
+  padding: 32px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(209, 154, 79, 0.16);
+  box-shadow: 0 26px 80px rgba(31, 42, 71, 0.08);
+  display: grid;
+  gap: 18px;
+}
+
+.user-detail-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(245, 245, 255, 0.92);
+}
+
+.user-detail-row span {
+  color: #5f6d8b;
+}
+
+.user-detail-row strong {
+  color: #1f314f;
+}
+
+.close-btn {
+  margin-top: 14px;
+  border: none;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #4f77d6, #d1a54f);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .user-detail-row {
+    grid-template-columns: 1fr;
+  }
+}

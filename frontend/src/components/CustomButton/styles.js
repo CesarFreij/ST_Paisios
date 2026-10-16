@@ -26,6 +26,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    buttonCompleted: {
+        backgroundColor: 'rgba(255, 165, 0, 0.30)',
+        borderColor: '#FFA500',
+    },
 
     iconWrapper: {
         justifyContent: 'center',

@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     backText: {
         color: '#348cb2',
         fontSize: 16,
-        marginLeft: 8,
+        marginEnd: 8,
         fontWeight: '600',
     },
     title: {
@@ -44,19 +44,9 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 8,
     },
-    gradientOverlay: {
-        position: 'absolute',
-        top: -20,
-        left: -20,
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        backgroundColor: 'rgba(255,255,255,0.18)',
-    },
     premiumHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
         marginBottom: 14,
     },
     premiumTag: {
@@ -79,7 +69,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.13)',
         borderRadius: 20,
         padding: 14,
-        marginLeft: 10,
+        marginStart: 10,
     },
     summaryLabel: {
         color: '#dbe8ff',
@@ -149,7 +139,7 @@ const styles = StyleSheet.create({
         padding: 16,
         minHeight: 110,
         justifyContent: 'space-between',
-        marginLeft: 10,
+        marginStart: 10,
     },
     statsLabel: {
         color: '#63738f',
@@ -163,6 +153,22 @@ const styles = StyleSheet.create({
     },
     calendarGrid: {
         flexDirection: 'column',
+    },
+    perfectMonthBanner: {
+        backgroundColor: '#fff7e0',
+        borderColor: '#f3c969',
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 16,
+    },
+    perfectMonthBannerText: {
+        color: '#76520b',
+        fontSize: 14,
+        fontWeight: '700',
+        textAlign: 'right',
+        writingDirection: 'rtl',
+        lineHeight: 22,
     },
     calendarCard: {
         backgroundColor: '#f7fbff',
@@ -255,8 +261,8 @@ const styles = StyleSheet.create({
     },
     progressGlow: {
         position: 'absolute',
-        left: 0,
-        right: 0,
+        start: 0,
+        end: 0,
         top: 0,
         bottom: 0,
         backgroundColor: 'rgba(52, 140, 178, 0.24)',

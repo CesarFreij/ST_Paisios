@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     },
     icon: {
         position: 'absolute',
-        left: 20,
+        end: 20,
         top: '50%',
         transform: [{ translateY: '-50%' }],
         zIndex: 1
@@ -48,8 +48,8 @@ const styles = StyleSheet.create({
     input: {
         color: 'rgb(51, 51, 51)',
         paddingVertical: 16,
-        paddingLeft: 50,
-        paddingRight: 20,
+        paddingStart: 20,
+        paddingEnd: 50,
     },
     button: {
         backgroundColor: 'rgb(116, 148, 236)',
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '100%',
         height: '300%',
-        left: 0,
+        start: 0,
         backgroundColor: 'rgb(116, 148, 236)',
         borderRadius: 75,
         zIndex: 2

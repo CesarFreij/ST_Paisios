@@ -4,6 +4,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#f0f8ff',
+        direction: 'rtl',
     },
     header: {
         flexDirection: 'row',
@@ -20,7 +21,7 @@ const styles = StyleSheet.create({
     backText: {
         color: '#348cb2',
         fontSize: 16,
-        marginLeft: 8,
+        marginEnd: 8,
         fontWeight: '600',
     },
     title: {
@@ -44,6 +45,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#6f7f96',
         marginBottom: 15,
+        textAlign: 'right',
     },
     currentRankInfo: {
         flexDirection: 'row',
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 15,
+        marginEnd: 15,
     },
     currentRankNumber: {
         fontSize: 16,
@@ -64,6 +66,7 @@ const styles = StyleSheet.create({
     },
     currentUserDetails: {
         flex: 1,
+        alignItems: 'flex-start',
     },
     currentUserName: {
         fontSize: 22,
@@ -75,6 +78,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#348cb2',
+        fontFamily: 'sans-serif',
+        textAlign: 'right',
     },
     sectionTitle: {
         marginHorizontal: 20,
@@ -82,6 +87,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#213a71',
+        textAlign: 'right',
     },
     list: {
         paddingHorizontal: 20,
@@ -119,12 +125,19 @@ const styles = StyleSheet.create({
     },
     userInfo: {
         flex: 1,
-        marginLeft: 15,
+        marginStart: 15,
+    },
+    userNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 6,
     },
     userName: {
         fontSize: 18,
         fontWeight: '700',
         color: '#162d50',
+        textAlign: 'right',
     },
     currentUserName: {
         color: '#348cb2',
@@ -134,13 +147,64 @@ const styles = StyleSheet.create({
         color: '#348cb2',
         fontWeight: '600',
     },
+    roleBadge: {
+        borderRadius: 999,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+    },
+    roleBadgeText: {
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    ownerRoleBadge: {
+        backgroundColor: '#fff1c2',
+    },
+    adminRoleBadge: {
+        backgroundColor: '#dbeafe',
+    },
+    userRoleBadge: {
+        backgroundColor: '#e5e7eb',
+    },
     pointsContainer: {
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
     },
     pointsText: {
         fontSize: 16,
         fontWeight: '700',
         color: '#348cb2',
+        fontFamily: 'sans-serif',
+        textAlign: 'left',
+    },
+    errorState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    errorFooter: {
+        alignItems: 'center',
+        paddingHorizontal: 16,
+    },
+    errorText: {
+        color: '#9f2d20',
+        textAlign: 'center',
+        lineHeight: 24,
+    },
+    retryButton: {
+        marginTop: 12,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 10,
+        backgroundColor: '#348cb2',
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+    },
+    emptyText: {
+        paddingVertical: 28,
+        textAlign: 'center',
+        color: '#6f7f96',
     },
 });
 

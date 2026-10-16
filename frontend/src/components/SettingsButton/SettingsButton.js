@@ -1,12 +1,60 @@
-import { View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native'
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { ActivityIndicator, View, Text, Modal, TouchableOpacity, ScrollView } from 'react-native'
+import { FontAwesome5 } from '@expo/vector-icons';
 import styles from './styles';
-import { useState } from 'react'
-import { useNavigation } from '@react-navigation/native';
+import { useCallback, useState } from 'react'
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import authService from '../../services/authService';
+import api from '../../api/apiClient';
 
 export default function ModalScreen() {
     const [settingsVisible, setSettingsVisible] = useState(false);
+    const [summary, setSummary] = useState(null);
+    const [summaryLoading, setSummaryLoading] = useState(true);
     const navigation = useNavigation();
+
+    const loadSettingsSummary = useCallback(async () => {
+        setSummaryLoading(true);
+        try {
+            const response = await api.get('/api/user/settings-summary');
+            const data = response.data?.data;
+            if (
+                !data ||
+                !Number.isFinite(Number(data.totalPoints)) ||
+                !Number.isFinite(Number(data.currentRank)) ||
+                typeof data.currentTitle !== 'string' ||
+                typeof data.quizStatus !== 'string'
+            ) {
+                throw new Error('Invalid settings summary response.');
+            }
+            setSummary({
+                totalPoints: Number(data.totalPoints),
+                currentRank: Number(data.currentRank),
+                currentTitle: data.currentTitle,
+                quizStatus: data.quizStatus,
+            });
+        } catch (error) {
+            console.error('Failed to load settings summary:', {
+                baseURL: error.config?.baseURL,
+                url: error.config?.url,
+                responseData: error.response?.data,
+            });
+            setSummary(null);
+        } finally {
+            setSummaryLoading(false);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadSettingsSummary();
+            return undefined;
+        }, [loadSettingsSummary])
+    );
+
+    const openSettings = () => {
+        setSettingsVisible(true);
+        loadSettingsSummary();
+    };
 
     const openPoints = () => {
         setSettingsVisible(false);
@@ -23,12 +71,25 @@ export default function ModalScreen() {
         navigation.navigate('WeeklyExam');
     };
 
+    const handleLogout = async () => {
+        try {
+            await authService.logout();
+            setSettingsVisible(false);
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'LoginRegister' }],
+            });
+        } catch (error) {
+            console.error('Failed to clear authentication data:', error);
+        }
+    };
+
     return (
         <>
         {/* Settings Button */}
             <TouchableOpacity
                 style={styles.settingsButton}
-                onPress={() => setSettingsVisible(true)}
+                onPress={openSettings}
             >
                 <FontAwesome5 name="align-justify" size={30} color="white" />
             </TouchableOpacity>
@@ -56,37 +117,61 @@ export default function ModalScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView style={styles.modalBody}>
+<ScrollView style={styles.modalBody}>
                             {/* Points Option */}
                             <TouchableOpacity style={styles.menuItem} onPress={openPoints}>
                                 <FontAwesome5 name="star" size={20} color="#348cb2" />
-                                <Text style={styles.menuItemText}>نقاطي</Text>
-                                <Text style={styles.pointsValue}>950</Text>
+                                <Text style={styles.menuItemText}>النقاط</Text>
+                                <View style={styles.menuSummary}>
+                                    {summaryLoading ? <ActivityIndicator size="small" color="#348cb2" /> : (
+                                        <Text style={[styles.pointsValue, { color: '#348cb2', backgroundColor: '#348cb220' }]} numberOfLines={1} adjustsFontSizeToFit ellipsizeMode="tail">
+                                            {`${summary?.totalPoints ?? '—'} نقطة`}
+                                        </Text>
+                                    )}
+                                </View>
                             </TouchableOpacity>
 
                             {/* Ranking Option */}
                             <TouchableOpacity style={styles.menuItem} onPress={openRank}>
                                 <FontAwesome5 name="trophy" size={20} color="#f39c12" />
                                 <Text style={styles.menuItemText}>ترتيبي</Text>
-                                <Text style={styles.rankValue}>#12</Text>
+                                <View style={styles.menuSummary}>
+                                    {summaryLoading ? <ActivityIndicator size="small" color="#f39c12" /> : (
+                                        <Text style={[styles.pointsValue, { color: '#f39c12', backgroundColor: '#f39c1220' }]} numberOfLines={1} adjustsFontSizeToFit ellipsizeMode="tail">
+                                            {summary ? `#${summary.currentRank}` : '—'}
+                                        </Text>
+                                    )}
+                                </View>
                             </TouchableOpacity>
 
                             {/* Weekly exam Option */}
                             <TouchableOpacity style={styles.menuItem} onPress={openWeeklyExam}>
                                 <FontAwesome5 name="book" size={20} color="#2e86de" />
                                 <Text style={styles.menuItemText}>الاختبارات الأسبوعية</Text>
-                                <Text style={styles.pointsValue}>جديد</Text>
+                                <View style={styles.menuSummary}>
+                                    {summaryLoading ? <ActivityIndicator size="small" color="#2e86de" /> : (
+                                        <Text style={[styles.pointsValue, { color: '#2e86de', backgroundColor: '#2e86de20' }]} numberOfLines={1} adjustsFontSizeToFit ellipsizeMode="tail">
+                                            {summary?.quizStatus || '—'}
+                                        </Text>
+                                    )}
+                                </View>
                             </TouchableOpacity>
 
                             {/* Achievements Option */}
                             <TouchableOpacity style={styles.menuItem} onPress={() => { setSettingsVisible(false); navigation.navigate('Achievements'); }}>
                                 <FontAwesome5 name="award" size={20} color="#9b59b6" />
                                 <Text style={styles.menuItemText}>الإنجازات والألقاب</Text>
-                                <Text style={styles.pointsValue}>جديد</Text>
+                                <View style={styles.menuSummary}>
+                                    {summaryLoading ? <ActivityIndicator size="small" color="#9b59b6" /> : (
+                                        <Text style={[styles.pointsValue, { color: '#9b59b6', backgroundColor: '#9b59b620' }]} numberOfLines={1} adjustsFontSizeToFit ellipsizeMode="tail">
+                                            {`${summary?.currentTitle || '—'}`}
+                                        </Text>
+                                    )}
+                                </View>
                             </TouchableOpacity>
 
                             {/* Logout Option */}
-                            <TouchableOpacity style={[styles.menuItem, styles.logoutItem]} onPress={() => navigation.replace('LoginRegister')}>
+                            <TouchableOpacity style={[styles.menuItem, styles.logoutItem]} onPress={handleLogout}>
                                 <FontAwesome5 name="sign-out-alt" size={20} color="#e74c3c" />
                                 <Text style={styles.logoutText}>تسجيل الخروج</Text>
                             </TouchableOpacity>

@@ -8,8 +8,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'absolute',
         top: 50,
-        left: 20,
-        right: 20,
+        start: 20,
+        end: 20,
         zIndex: 2,
     },
 
@@ -18,6 +18,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: 'white',
         lineHeight: 28,
+        writingDirection: 'rtl',
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        gap: 10,
+    },
+    retryText: {
+        color: 'white',
+        fontSize: 15,
+        fontWeight: '700',
+        textDecorationLine: 'underline',
     },
 });
 

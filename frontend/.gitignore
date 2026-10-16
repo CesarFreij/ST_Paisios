@@ -3,9 +3,13 @@
 # dependencies
 node_modules/
 
+# Environment variables
+.env*
+
 # Expo
 .expo/
 dist/
+build/
 web-build/
 expo-env.d.ts
 

@@ -5,7 +5,7 @@ const styles = StyleSheet.create({
     settingsButton: {
     position: 'absolute',
     top: 0,
-    right: 0,
+    end: 0,
     zIndex: 10,
     padding: 20,
     },
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     menuItem: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
         paddingVertical: 16,
         paddingHorizontal: 15,
@@ -55,8 +55,16 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#333',
-        marginLeft: 15,
+        marginRight: 15,
         flex: 1,
+        textAlign: 'right',
+        writingDirection: 'rtl',
+    },
+    menuSummary: {
+        maxWidth: '36%',
+        minWidth: 76,
+        alignItems: 'flex-start',
+        justifyContent: 'center',
     },
     pointsValue: {
         fontSize: 16,
@@ -66,15 +74,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
-    },
-    rankValue: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#f39c12',
-        backgroundColor: '#fef5e7',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 8,
+        maxWidth: '100%',
+        textAlign: 'left',
+        writingDirection: 'rtl',
     },
     logoutItem: {
         backgroundColor: '#ffebee',
@@ -83,8 +85,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#e74c3c',
-        marginLeft: 15,
-        flex: 1,
+        marginRight: 15,
     }
 });
 

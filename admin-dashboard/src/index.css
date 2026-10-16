@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@theme {
+  --font-sans: "Tajawal", sans-serif;
+  --color-primary-50: #eef7f4;
+  --color-primary-100: #d9ece5;
+  --color-primary-200: #b8d9cd;
+  --color-primary-300: #8dbfac;
+  --color-primary-400: #5e9e87;
+  --color-primary-500: #3b806b;
+  --color-primary-600: #2b6a57;
+  --color-primary-700: #245347;
+  --color-primary-800: #1d483d;
+  --color-primary-900: #193d35;
+  --color-primary-950: #102b25;
+  --color-forest: #193d35;
+  --color-forest-light: #245347;
+  --color-canvas: #f4f5f1;
+  --color-ink: #1e302b;
+  --color-muted: #718079;
+  --color-line: #e4e8e2;
+  --color-brass: #e5b46e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  direction: rtl;
+  scroll-behavior: smooth;
+  background: #f4f5f1;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-width: 320px;
+  font-family: "Tajawal", sans-serif;
+  color: #1e302b;
+  background: #f4f5f1;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input:not([type="radio"]):not([type="checkbox"]),
+textarea,
+select {
+  border-width: 1px !important;
+  border-color: color-mix(in srgb, var(--color-primary-200) 55%, transparent) !important;
+  outline: none !important;
+}
+
+input:not([type="radio"]):not([type="checkbox"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary-500) !important;
+  box-shadow: 0 0 0 1px var(--color-primary-500) !important;
+}
+
+input[type="date"],
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-date-and-time-value {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+.mobile-nav {
+  scrollbar-width: none;
+}
+
+.mobile-nav::-webkit-scrollbar {
+  display: none;
+}
+
+::selection {
+  color: #ffffff;
+  background: #193d35;
+}

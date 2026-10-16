@@ -1,0 +1,21 @@
+.skeleton-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #edeef3 0%, #f6f7fb 50%, #ececf2 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

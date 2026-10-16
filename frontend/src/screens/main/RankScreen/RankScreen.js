@@ -1,31 +1,81 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import api from '../../../api/apiClient';
+import { formatArabicPoints } from '../../../utils/formatArabicPoints';
 import styles from './styles';
 
-const friends = [
-    { id: '1', name: 'أحمد محمد', points: 1200, rank: 1 },
-    { id: '2', name: 'فاطمة علي', points: 1150, rank: 2 },
-    { id: '3', name: 'محمد حسن', points: 1100, rank: 3 },
-    { id: '4', name: 'سارة خالد', points: 1050, rank: 4 },
-    { id: '5', name: 'علي أحمد', points: 1000, rank: 5 },
-    { id: '6', name: 'لينا سامي', points: 980, rank: 6 },
-    { id: '7', name: 'كريم يوسف', points: 960, rank: 7 },
-    { id: '8', name: 'نورا جميل', points: 940, rank: 8 },
-    { id: '9', name: 'حسن علي', points: 920, rank: 9 },
-    { id: '10', name: 'مريم خالد', points: 900, rank: 10 },
-    { id: '11', name: 'يوسف أحمد', points: 880, rank: 11 },
-    { id: '12', name: 'سيزار فريج', points: 950, rank: 12, isCurrentUser: true },
-    { id: '13', name: 'جورج بطرس', points: 850, rank: 13 },
-    { id: '14', name: 'ماريا يوسف', points: 830, rank: 14 },
-    { id: '15', name: 'بولس أنطون', points: 810, rank: 15 },
-];
+const roleBadges = {
+    owner: { label: 'مالك', style: styles.ownerRoleBadge },
+    admin: { label: 'مرشد', style: styles.adminRoleBadge },
+    user: { label: 'مستخدم', style: styles.userRoleBadge },
+};
 
 export default function RankScreen() {
     const navigation = useNavigation();
-    const currentUser = friends.find(friend => friend.isCurrentUser);
+    const [users, setUsers] = useState([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [error, setError] = useState('');
+    const [hasMore, setHasMore] = useState(true);
+    const [currentUser, setCurrentUser] = useState({ name: '', points: 0, rank: 0, role: 'user' });
+    const requestInFlight = useRef(false);
+
+    const fetchRankings = useCallback(async (requestedPage, append = false) => {
+        if (requestInFlight.current) return;
+        requestInFlight.current = true;
+        append ? setLoadingMore(true) : setLoading(true);
+        setError('');
+
+        try {
+            // تم إصلاح الرابط هنا بإزالة /api المكررة
+            const response = await api.get('/api/users/rank', {
+                params: { page: requestedPage, limit: 20 },
+            });
+            const result = response.data?.data ?? response.data ?? {};
+            const nextUsers = Array.isArray(result.users) ? result.users : [];
+
+            setUsers((existingUsers) => append ? [...existingUsers, ...nextUsers] : nextUsers);
+            if (result.currentUser) setCurrentUser(result.currentUser);
+            setPage(requestedPage);
+            setHasMore(result.hasMore === true);
+        } catch (requestError) {
+    console.log('--- DEBUG INFO ---');
+    console.log('Target URL:', requestError.config?.url);
+    console.log('Base URL:', requestError.config?.baseURL);
+    console.log('Full URL:', (requestError.config?.baseURL || '') + (requestError.config?.url || ''));
+    console.log('Server Message:', requestError.response?.data?.message);
+    console.error('Failed to fetch rankings:', requestError);
+            setError(requestError.response?.data?.message || 'تعذر تحميل قائمة الترتيب. تحقق من اتصالك ثم أعد المحاولة.');
+            if (!append) {
+                setUsers([]);
+                setCurrentUser({ name: '', points: 0, rank: 0, role: 'user' });
+                setHasMore(false);
+            }
+        } finally {
+            requestInFlight.current = false;
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRankings(1);
+    }, [fetchRankings]);
+
+    const loadMore = () => {
+        if (!loading && !loadingMore && hasMore) {
+            fetchRankings(page + 1, true);
+        }
+    };
+
+    const retry = () => {
+        const append = users.length > 0;
+        fetchRankings(append ? page + 1 : 1, append);
+    };
 
     const getRankIcon = (rank) => {
         if (rank === 1) return 'trophy';
@@ -49,12 +99,21 @@ export default function RankScreen() {
             <Text style={styles.rankNumber}>#{item.rank}</Text>
             </View>
             <View style={styles.userInfo}>
-            <Text style={[styles.userName, item.isCurrentUser && styles.currentUserName]}>{item.name}</Text>
-            {item.isCurrentUser && <Text style={styles.currentUserLabel}>(أنت)</Text>}
+                <View style={styles.userNameRow}>
+                    <Text style={[styles.userName, item.isCurrentUser && styles.currentUserName]}>{item.name}</Text>
+                    {roleBadges[item.role] && (item.role !== 'user' || ['admin', 'owner'].includes(currentUser.role)) && (
+                        <View style={[styles.roleBadge, roleBadges[item.role].style]}>
+                            <Text style={styles.roleBadgeText}>{roleBadges[item.role].label}</Text>
+                        </View>
+                    )}
+                </View>
+                {item.isCurrentUser && <Text style={styles.currentUserLabel}>(أنت)</Text>}
             </View>
         </View>
         <View style={styles.pointsContainer}>
-            <Text style={styles.pointsText}>{item.points} نقطة</Text>
+            <Text style={styles.pointsText}>
+                {item.points.toLocaleString('en-US')}
+            </Text>
         </View>
         </View>
     );
@@ -62,11 +121,11 @@ export default function RankScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
-                <Text style={styles.backText}>رجوع</Text>
-                </TouchableOpacity>
                 <Text style={styles.title}>ترتيبي</Text>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Text style={styles.backText}>رجوع</Text>
+                <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.currentRankCard}>
@@ -78,19 +137,48 @@ export default function RankScreen() {
                 </View>
                 <View style={styles.currentUserDetails}>
                     <Text style={styles.currentUserName}>{currentUser.name}</Text>
-                    <Text style={styles.currentUserPoints}>{currentUser.points} نقطة</Text>
+                    <Text style={styles.currentUserPoints}>
+                        {formatArabicPoints(currentUser.points)}
+                    </Text>
                 </View>
                 </View>
             </View>
 
             <Text style={styles.sectionTitle}>ترتيب الأصدقاء</Text>
 
-            <FlatList
-                data={friends}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.list}
-                renderItem={renderItem}
-            />
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#348cb2" />
+                </View>
+            ) : error && users.length === 0 ? (
+                <View style={styles.errorState} accessibilityRole="alert">
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={retry} accessibilityRole="button">
+                        <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <FlatList
+                    data={users}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.list}
+                    renderItem={renderItem}
+                    onEndReached={loadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={loadingMore ? (
+                        <ActivityIndicator size="small" color="#348cb2" />
+                    ) : error ? (
+                        <View style={styles.errorFooter} accessibilityRole="alert">
+                            <Text style={styles.errorText}>{error}</Text>
+                            <TouchableOpacity style={styles.retryButton} onPress={retry} accessibilityRole="button">
+                                <Text style={styles.retryButtonText}>إعادة المحاولة</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
+                    ListFooterComponentStyle={{ paddingVertical: 16, alignItems: 'center' }}
+                    ListEmptyComponent={<Text style={styles.emptyText}>لا يوجد مستخدمون في قائمة الترتيب حتى الآن.</Text>}
+                />
+            )}
         </SafeAreaView>
     );
 }

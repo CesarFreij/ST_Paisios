@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './styles';
 
 const defaultQuestions = [
@@ -32,6 +33,8 @@ export default function Quiz() {
   const route = useRoute();
   const questions = route.params?.questions ?? defaultQuestions;
   const title = route.params?.title ?? 'الاختبار الأسبوعي';
+  const quizType = route.params?.quizType;
+  const quizId = route.params?.quizId;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
@@ -49,7 +52,7 @@ export default function Quiz() {
   const handleNext = () => {
     if (selectedAnswer === null) return;
     if (isLastQuestion) {
-      navigation.navigate('QuizResult', { questions, answers });
+      navigation.navigate('QuizResult', { questions, answers, quizType, quizId });
       return;
     }
     setCurrentIndex(currentIndex + 1);
@@ -65,7 +68,7 @@ export default function Quiz() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+          <FontAwesome5 name="chevron-right" size={20} color="#348cb2" />
           <Text style={styles.backText}>رجوع</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{title}</Text>
@@ -76,7 +79,7 @@ export default function Quiz() {
         <Text style={styles.questionText}>{currentQuestion.question}</Text>
 
         <FlatList
-          data={currentQuestion.answers}
+          data={currentQuestion.answers ?? currentQuestion.options ?? []}
           keyExtractor={(_, index) => String(index)}
           renderItem={({ item, index }) => (
             <TouchableOpacity

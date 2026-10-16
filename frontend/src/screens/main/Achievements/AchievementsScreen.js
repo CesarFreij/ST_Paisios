@@ -1,253 +1,283 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Animated, Easing } from 'react-native';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { useNavigation } from '@react-navigation/native';
-import styles from './styles';
+import { useEffect, useRef, useState } from 'react'
+import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useNavigation } from '@react-navigation/native'
+import FontAwesome from '@expo/vector-icons/FontAwesome'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
+import api from '../../../api/apiClient'
+import styles from './styles'
 
-const achievementsData = [
-  {
-    id: 'prayer-streak',
-    icon: 'praying-hands',
-    title: '🙏 محافظ على الصلاة',
-    description: 'صلِّ لمدة 10 أيام متتالية',
-    reward: 100,
-    progress: 7,
-    target: 10,
-    locked: false,
-  },
-  {
-    id: 'bible-reader',
-    icon: 'book-open',
-    title: '📖 قارئ الكتاب المقدس',
-    description: 'اقرأ الكتاب المقدس لمدة 15 يوماً',
-    reward: 150,
-    progress: 10,
-    target: 15,
-    locked: false,
-  },
-  {
-    id: 'church-member',
-    icon: 'church',
-    title: '⛪ ابن الكنيسة',
-    description: 'احضر الكنيسة 8 مرات',
-    reward: 120,
-    progress: 5,
-    target: 8,
-    locked: false,
-  },
-  {
-    id: 'messenger',
-    icon: 'hand-holding-heart',
-    title: '🤝 مرسل',
-    description: 'ادعُ 5 أصدقاء',
-    reward: 200,
-    progress: 2,
-    target: 5,
-    locked: false,
-  },
-  {
-    id: 'good-deed',
-    icon: 'heart',
-    title: '❤️ صانع الخير',
-    description: 'قم بـ 20 عمل خير',
-    reward: 250,
-    progress: 13,
-    target: 20,
-    locked: false,
-  },
-];
+const achievementCards = [
+  { id: 'prayer', targetKey: 'prayer', countKey: 'prayerCount', title: 'المصلي الدائم', icon: 'praying-hands', iconSet: FontAwesome5 },
+  { id: 'fasting', targetKey: 'fasting', countKey: 'fastingCount', title: 'الصائم الملتزم', icon: 'moon', iconSet: FontAwesome5 },
+  { id: 'bible', targetKey: 'bible', countKey: 'bibleCount', title: 'محب الكلمة', icon: 'bible', iconSet: FontAwesome5 },
+  { id: 'church', targetKey: 'church', countKey: 'churchCount', title: 'ابن الكنيسة', icon: 'church', iconSet: FontAwesome5 },
+  { id: 'goodDeed', targetKey: 'goodDeed', countKey: 'goodDeedCount', title: 'القلب الرحيم', icon: 'hand-holding-heart', iconSet: FontAwesome6 },
+  { id: 'perfectDay', targetKey: 'perfectDay', countKey: 'perfectDaysCount', title: 'اليوم المثالي', icon: 'star', iconSet: FontAwesome5 },
+]
 
-const titlesData = [
-  { id: 'beginner', label: '🌱 مبتدئ', points: 0 },
-  { id: 'student', label: '⭐ تلميذ', points: 300 },
-  { id: 'server', label: '🔥 خادم', points: 700 },
-  { id: 'trustee', label: '👑 أمين', points: 1500 },
-  { id: 'role-model', label: '🏆 قدوة', points: 3000 },
-];
-
-const activeTitleId = 'server';
+const textStyles = { textAlign: 'left', writingDirection: 'rtl' }
+const formatPoints = (points) => Number(points || 0).toLocaleString('en-US')
 
 export default function AchievementsScreen() {
-  const navigation = useNavigation();
-  const cardAnims = useRef(achievementsData.map(() => new Animated.Value(0))).current;
-  const progressAnims = useRef(achievementsData.map(() => new Animated.Value(0))).current;
-  const scaleAnims = useRef(achievementsData.map(() => new Animated.Value(1))).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  const activeTitle = useMemo(
-    () => titlesData.find((title) => title.id === activeTitleId) ?? titlesData[0],
-    [],
-  );
+  const navigation = useNavigation()
+  const [payload, setPayload] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
+  const trailAnimation = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
-    Animated.stagger(
-      120,
-      achievementsData.map((item, index) =>
-        Animated.parallel([
-          Animated.timing(cardAnims[index], {
-            toValue: 1,
-            duration: 420,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(progressAnims[index], {
-            toValue: Math.min(100, (item.progress / item.target) * 100),
-            duration: 1200,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: false,
-          }),
-        ]),
-      ),
-    ).start();
+    let active = true
+    const loadProgress = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const response = await api.get('/api/achievements/my-progress')
+        const result = response.data?.data
+        const targets = result?.globalConfig?.achievementTargets
+        const milestones = result?.globalConfig?.grandPrizeMilestones
+        if (
+          !result ||
+          !targets ||
+          !Array.isArray(milestones) ||
+          !result.userStats ||
+          !result.userAchievements
+        ) {
+          throw new Error('Invalid achievements progress response.')
+        }
+        if (active) setPayload(result)
+      } catch (requestError) {
+        console.error('Failed to load achievements progress:', requestError)
+        if (active) setError('تعذر تحميل الإنجازات ومسار الجوائز.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.04,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, []);
+    loadProgress()
+    return () => {
+      active = false
+    }
+  }, [retryKey])
 
-  const handlePressIn = (index) => {
-    Animated.spring(scaleAnims[index], {
-      toValue: 0.96,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 120,
-    }).start();
-  };
+  const globalConfig = payload?.globalConfig
+  const userStats = payload?.userStats
+  const userAchievements = payload?.userAchievements
+  const milestones = globalConfig?.grandPrizeMilestones ?? []
+  const totalEarnedPoints = Number(userStats?.totalEarnedPoints || 0)
+  const highestMilestone = milestones.reduce(
+    (highest, milestone) => Math.max(highest, Number(milestone.pointsNeeded) || 0),
+    0
+  )
+  const trailPercent = highestMilestone > 0
+    ? Math.min(100, (totalEarnedPoints / highestMilestone) * 100)
+    : 0
 
-  const handlePressOut = (index) => {
-    Animated.spring(scaleAnims[index], {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 120,
-    }).start();
-  };
+  useEffect(() => {
+    Animated.timing(trailAnimation, {
+      toValue: trailPercent,
+      duration: 700,
+      useNativeDriver: false,
+    }).start()
+  }, [trailAnimation, trailPercent])
+
+  const currentMilestone = [...milestones].reverse()
+    .find((milestone) => totalEarnedPoints >= milestone.pointsNeeded)
+  const nextMilestone = milestones.find((milestone) => totalEarnedPoints < milestone.pointsNeeded)
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="رجوع"
+          >
+            <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+            <Text style={[styles.backText, textStyles]}>رجوع</Text>
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#348cb2" />
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (error || !payload) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="رجوع"
+          >
+            <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+            <Text style={[styles.backText, textStyles]}>رجوع</Text>
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
+        </View>
+        <View style={styles.stateContainer}>
+          <Text style={[styles.stateText, textStyles]}>{error || 'تعذر تحميل البيانات.'}</Text>
+          <TouchableOpacity
+            onPress={() => setRetryKey((current) => current + 1)}
+            style={styles.retryButton}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.retryText, textStyles]}>إعادة المحاولة</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
-    <View style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="رجوع"
+        >
           <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
-          <Text style={styles.backText}>رجوع</Text>
+          <Text style={[styles.backText, textStyles]}>رجوع</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>الإنجازات والألقاب</Text>
+        <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>الإنجازات</Text>
-        {achievementsData.map((item, index) => {
-          const progressRatio = Math.min(1, item.progress / item.target);
-          const isComplete = item.progress >= item.target;
+        <View style={styles.sectionHeading}>
+          <FontAwesome5 name="medal" size={19} color="#d69e16" />
+          <Text style={[styles.sectionTitle, textStyles]}>الإنجازات</Text>
+        </View>
+
+        {achievementCards.map((item) => {
+          const targetList = globalConfig.achievementTargets[item.targetKey]
+          const level = Math.min(3, Math.max(0, Number(userAchievements[item.id]) || 0))
+          const count = Math.max(0, Number(userStats[item.countKey]) || 0)
+          const nextTarget = level < targetList.length ? Number(targetList[level]) : null
+          const progressPercent = nextTarget
+            ? Math.min(100, (count / nextTarget) * 100)
+            : 100
+          const Icon = item.iconSet
+
           return (
-            <Animated.View
-              key={item.id}
-              style={[
-                styles.achievementCard,
-                {
-                  opacity: cardAnims[index],
-                  transform: [
-                    { translateY: cardAnims[index].interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) },
-                    { scale: scaleAnims[index] },
-                  ],
-                },
-                item.locked && styles.lockedCard,
-                isComplete && styles.completeCard,
-              ]}
-            >
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPressIn={() => handlePressIn(index)}
-                onPressOut={() => handlePressOut(index)}
-                style={styles.achievementTouchable}
-              >
-                <View style={styles.achievementHeader}>
-                  <View style={styles.achievementIconWrapper}>
-                    <FontAwesome5 name={item.icon} size={22} color={isComplete ? '#27ae60' : '#348cb2'} />
-                  </View>
-                  <View style={styles.achievementInfo}>
-                    <Text style={styles.achievementTitle}>{item.title}</Text>
-                    <Text style={styles.achievementDescription}>{item.description}</Text>
-                  </View>
-                  {isComplete ? (
-                    <Animated.View style={styles.checkBadge}>
-                      <FontAwesome5 name="check" size={14} color="white" />
-                    </Animated.View>
-                  ) : null}
+            <View key={item.id} style={styles.achievementCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconBadge}>
+                  <Icon name={item.icon} size={22} color="#348cb2" />
                 </View>
+                <View style={styles.cardHeading}>
+                  <Text style={[styles.cardTitle, textStyles]}>{item.title}</Text>
+                  <Text style={[styles.cardDescription, textStyles]}>
+                    {nextTarget === null ? 'اكتمل الإنجاز' : `الهدف التالي: ${formatPoints(nextTarget)}`}
+                  </Text>
+                </View>
+              </View>
 
-                <View style={styles.rewardRow}>
-                  <Text style={styles.rewardLabel}>المكافأة</Text>
-                  <Text style={styles.rewardValue}>{item.reward} نقطة</Text>
-                </View>
-
-                <View style={styles.progressRow}>
-                  <Text style={styles.progressText}>Progress</Text>
-                  <Text style={styles.progressText}>{item.progress} / {item.target}</Text>
-                </View>
-                <View style={styles.progressTrack}>
-                  <Animated.View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: progressAnims[index].interpolate({
-                          inputRange: [0, 100],
-                          outputRange: ['0%', '100%'],
-                        }),
-                      },
-                    ]}
+              <View style={styles.starsRow} accessibilityLabel={`مستوى ${level} من 3`}>
+                <Text style={[styles.levelText, textStyles]}>{level} / 3 نجوم</Text>
+                {[1, 2, 3].map((star) => (
+                  <FontAwesome
+                    key={star}
+                    name="star"
+                    size={22}
+                    color={star <= level ? '#e5ad1f' : '#c7cdd5'}
                   />
-                </View>
-                <Text style={styles.progressPercentage}>{Math.round(progressRatio * 100)}%</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          );
+                ))}
+              </View>
+
+              <View style={styles.countRow}>
+                <Text style={[styles.countText, textStyles]}>
+                  {nextTarget === null
+                    ? `أكملت ${formatPoints(count)} / MAX`
+                    : `أكملت ${formatPoints(count)} / ${formatPoints(nextTarget)}`}
+                </Text>
+                <Text style={[styles.nextTierText, textStyles]}>
+                  {nextTarget === null ? 'اكتمل الإنجاز' : `المستوى التالي: ${level + 1}`}
+                </Text>
+              </View>
+              <View
+                style={styles.achievementTrack}
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: nextTarget ?? count,
+                  now: nextTarget === null ? count : Math.min(count, nextTarget),
+                }}
+              >
+                <View style={[styles.achievementFill, { width: `${progressPercent}%` }]} />
+              </View>
+            </View>
+          )
         })}
 
-        <Text style={[styles.sectionTitle, styles.sectionSpacing]}>الألقاب</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.titlesRow}>
-          {titlesData.map((item) => {
-            const isActive = item.id === activeTitleId;
-            return (
-              <Animated.View
-                key={item.id}
-                style={[
-                  styles.titleCard,
-                  isActive && styles.titleCardActive,
-                  isActive && {
-                    transform: [{ scale: pulseAnim }],
-                  },
-                ]}
-              >
-                <Text style={styles.titleLabel}>{item.label}</Text>
-                <Text style={styles.titlePoints}>{item.points} نقطة</Text>
-                {isActive && (
-                  <View style={styles.crownBadge}>
-                    <FontAwesome5 name="crown" size={14} color="#f1c40f" />
-                  </View>
-                )}
-              </Animated.View>
-            );
-          })}
-        </ScrollView>
+        <View style={styles.sectionHeading}>
+          <FontAwesome5 name="trophy" size={19} color="#d69e16" />
+          <Text style={[styles.sectionTitle, textStyles]}>المسار السنوي</Text>
+        </View>
 
-        <View style={styles.currentBadge}>
-          <Text style={styles.currentLabel}>لقبك الحالي</Text>
-          <Text style={styles.currentTitle}>{activeTitle.label.replace('🔥 ', '')}</Text>
+        <View style={styles.pathCard}>
+          <View style={styles.pathSummary}>
+            <Text style={[styles.pointsTotal, textStyles]}>
+              {formatPoints(totalEarnedPoints)} نقطة مكتسبة
+            </Text>
+            {currentMilestone ? (
+              <Text style={[styles.currentTitle, textStyles]}>{currentMilestone.name}</Text>
+            ) : null}
+          </View>
+          <View style={styles.pathTrack}>
+            <View style={styles.pathRail} />
+            <Animated.View
+              style={[
+                styles.pathFill,
+                {
+                  height: trailAnimation.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            />
+            {milestones.map((milestone) => {
+              const reached = totalEarnedPoints >= milestone.pointsNeeded
+              return (
+                <View key={milestone.level} style={styles.milestoneRow}>
+                  <View style={[styles.milestoneDot, reached ? styles.milestoneUnlocked : styles.milestoneLocked]}>
+                    {reached
+                      ? <FontAwesome name="check" size={13} color="#ffffff" />
+                      : <Text style={[styles.milestoneNumber, textStyles]}>{milestone.level}</Text>}
+                  </View>
+                  <View style={styles.milestoneInfo}>
+                    <Text style={[styles.milestoneName, textStyles, reached && styles.milestoneNameUnlocked]}>
+                      {milestone.name}
+                    </Text>
+                    <Text style={[styles.milestonePoints, textStyles]}>
+                      {formatPoints(milestone.pointsNeeded)} نقطة
+                    </Text>
+                  </View>
+                  <Text style={[styles.milestoneStatus, textStyles, reached && styles.milestoneNameUnlocked]}>
+                    {reached ? 'تم الفتح' : 'مقفلة'}
+                  </Text>
+                </View>
+              )
+            })}
+          </View>
+          <Text style={[styles.pathHint, textStyles]}>
+            {nextMilestone
+              ? `باقي ${formatPoints(nextMilestone.pointsNeeded - totalEarnedPoints)} نقطة للوصول إلى ${nextMilestone.name}`
+              : 'أحسنت! وصلت إلى أعلى مستوى في المسار السنوي.'}
+          </Text>
         </View>
       </ScrollView>
-    </View>
-  );
+    </SafeAreaView>
+  )
 }

@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
   backText: {
     color: '#348cb2',
     fontSize: 16,
-    marginLeft: 8,
+    marginStart: 8,
     fontWeight: '600',
   },
   title: {

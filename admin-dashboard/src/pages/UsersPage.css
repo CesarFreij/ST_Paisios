@@ -1,0 +1,105 @@
+.page-grid {
+  display: grid;
+  gap: 28px;
+}
+
+.page-header-block {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.page-tag {
+  margin: 0 0 10px;
+  color: #5f6d8b;
+  font-size: 0.95rem;
+}
+
+.page-header-block h2 {
+  font-size: clamp(1.75rem, 2vw, 2.2rem);
+}
+
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.table-actions input {
+  width: 320px;
+  max-width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(209, 154, 79, 0.18);
+  background: rgba(255, 255, 255, 0.88);
+  color: #1f314f;
+}
+
+.users-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.user-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(209, 154, 79, 0.12);
+  box-shadow: 0 22px 54px rgba(31, 42, 71, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+}
+
+.user-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.user-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.user-email {
+  margin: 0;
+  color: #5f6d8b;
+}
+
+.user-role {
+  padding: 10px 16px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.user-role--admin {
+  background: rgba(79, 119, 214, 0.14);
+  color: #1f314f;
+}
+
+.user-role--editor {
+  background: rgba(209, 154, 79, 0.14);
+  color: #1f314f;
+}
+
+.user-role--viewer {
+  background: rgba(158, 168, 207, 0.14);
+  color: #1f314f;
+}
+
+.user-meta {
+  margin: 12px 0 0;
+  color: #5f6d8b;
+}
+
+@media (max-width: 900px) {
+  .page-header-block,
+  .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

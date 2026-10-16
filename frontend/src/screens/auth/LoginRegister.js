@@ -1,5 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native'
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import styles from './styles'
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -7,6 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import authService from '../../services/authService'
 
 const { height } = Dimensions.get('window');
 
@@ -20,7 +21,23 @@ export default function LoginRegister() {
     const [showLogin, setShowLogin] = useState(true);
     const [loginError, setLoginError] = useState('');
 
-    const handleLogin = () => {
+    useEffect(() => {
+        let mounted = true
+        const checkAuth = async () => {
+            try {
+                const user = await authService.getCurrentUser()
+                if (user && mounted) {
+                    navigation.replace('Home')
+                }
+            } catch (err) {
+                // no-op
+            }
+        }
+        checkAuth()
+        return () => { mounted = false }
+    }, [])
+
+    const handleLogin = async () => {
         if (!usernameLogin.trim() || !passwordLogin.trim()) {
             setLoginError('يرجى ملء جميع الحقول المطلوبة');
             Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة');
@@ -28,7 +45,20 @@ export default function LoginRegister() {
         }
 
         setLoginError('');
-        navigation.replace('Home');
+        try {
+            const res = await authService.login(usernameLogin.trim(), passwordLogin)
+            if (res && res.success) {
+                const { token } = res.data
+                await authService.saveAuth(token)
+                navigation.replace('Home')
+            } else {
+                const msg = (res && res.message) || 'فشل تسجيل الدخول'
+                Alert.alert('خطأ', msg)
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
+            Alert.alert('خطأ', msg)
+        }
     };
     const beforeTopAnim = useRef(new Animated.Value(0)).current;
     const togglePanelTopAnim = useRef(new Animated.Value(0)).current;
@@ -100,7 +130,6 @@ export default function LoginRegister() {
                         flexGrow: 1,
                         minHeight: height - 60,
                     }}
-                    keyboardShouldPersistTaps="handled"
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
@@ -216,7 +245,26 @@ export default function LoginRegister() {
                                         </View>
                                         <TouchableOpacity 
                                         style={styles.button} 
-                                        onPress={() => { }} 
+                                        onPress={async () => {
+                                            if (!usernameRegister.trim() || !passwordRegister || !confirmPasswordRegister) {
+                                                Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
+                                                return
+                                            }
+                                            try {
+                                                const res = await authService.register(usernameRegister.trim(), passwordRegister, confirmPasswordRegister)
+                                                if (res && res.success) {
+                                                    const { token } = res.data
+                                                    await authService.saveAuth(token)
+                                                    navigation.replace('Home')
+                                                } else {
+                                                    const msg = (res && res.message) || 'فشل التسجيل'
+                                                    Alert.alert('خطأ', msg)
+                                                }
+                                            } catch (err) {
+                                                const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
+                                                Alert.alert('خطأ', msg)
+                                            }
+                                        }}
                                         activeOpacity={0.8}
                                         >
                                             <Text style={styles.text}>تسجيل</Text>
