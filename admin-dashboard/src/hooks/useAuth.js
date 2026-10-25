@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
-const AUTH_CHANGE_EVENT = 'st-seraphim-auth-change'
-const TOKEN_KEY = 'st_seraphim_token'
-const USER_KEY = 'st_seraphim_user'
+const AUTH_CHANGE_EVENT = 'st-paisios-auth-change'
+const TOKEN_KEY = 'st_paisios_token'
+const USER_KEY = 'st_paisios_user'
 
 const subscribe = (onChange) => {
   window.addEventListener(AUTH_CHANGE_EVENT, onChange)

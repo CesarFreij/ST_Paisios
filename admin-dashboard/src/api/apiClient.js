@@ -16,7 +16,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('st_seraphim_token')
+  const token = localStorage.getItem('st_paisios_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

@@ -74,7 +74,7 @@ export default function Sidebar() {
         <div className="mb-10 flex items-center gap-3 px-1">
           <div className="grid size-11 place-items-center rounded-xl bg-brass text-forest shadow-sm"><Church size={22} strokeWidth={1.8} /></div>
           <div>
-            <p className="text-base font-bold leading-tight">القديس سيرافيم</p>
+            <p className="text-base font-bold leading-tight">القديس باييسيوس الآثوسي</p>
             <p className="mt-1 text-xs text-white/55">إدارة التطبيق</p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function Sidebar() {
         </nav>
 
         <div className="mt-auto border-t border-white/10 px-3 pt-5 text-xs text-white/45">
-          لوحة إدارة القديس سيرافيم
+          لوحة إدارة القديس باييسيوس الآثوسي
         </div>
       </motion.aside>
 

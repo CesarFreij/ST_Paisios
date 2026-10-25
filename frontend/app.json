@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "ST_Seraphim",
-    "slug": "ST_Seraphim",
+    "name": "ST Paisios",
+    "slug": "ST Paisios",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,23 +18,25 @@
     "android": {
       "supportsRTL": true,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ST_Seraphim"
+      "package": "com.cesarfreij.stpaisios"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-splash-screen"
     ],
     "extra": {
       "eas": {
         "projectId": "b1eac14a-9083-4923-9921-381467900ce4"
       }
-    }
+    },
+    "owner": "cesarfreij"
   }
 }

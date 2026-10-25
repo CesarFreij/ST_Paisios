@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#6f7f96',
         marginBottom: 15,
-        textAlign: 'right',
+        textAlign: 'left',
     },
     currentRankInfo: {
         flexDirection: 'row',
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#213a71',
-        textAlign: 'right',
+        textAlign: 'left',
     },
     list: {
         paddingHorizontal: 20,

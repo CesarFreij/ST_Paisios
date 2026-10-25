@@ -1,4 +1,4 @@
-const MY_PC_IP = 'http://192.168.1.107:5000';
+const MY_PC_IP = 'http://10.222.186.183:5000';
 
 const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim()
 

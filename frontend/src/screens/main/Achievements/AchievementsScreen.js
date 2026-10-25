@@ -17,7 +17,7 @@ const achievementCards = [
   { id: 'perfectDay', targetKey: 'perfectDay', countKey: 'perfectDaysCount', title: 'اليوم المثالي', icon: 'star', iconSet: FontAwesome5 },
 ]
 
-const textStyles = { textAlign: 'left', writingDirection: 'rtl' }
+const textStyles = { textAlign: 'right', writingDirection: 'rtl' }
 const formatPoints = (points) => Number(points || 0).toLocaleString('en-US')
 
 export default function AchievementsScreen() {
@@ -155,8 +155,8 @@ export default function AchievementsScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeading}>
-          <FontAwesome5 name="medal" size={19} color="#d69e16" />
           <Text style={[styles.sectionTitle, textStyles]}>الإنجازات</Text>
+          <FontAwesome5 name="medal" size={19} color="#d69e16" style={{marginRight: 'auto'}}/>
         </View>
 
         {achievementCards.map((item) => {
@@ -221,8 +221,8 @@ export default function AchievementsScreen() {
         })}
 
         <View style={styles.sectionHeading}>
-          <FontAwesome5 name="trophy" size={19} color="#d69e16" />
           <Text style={[styles.sectionTitle, textStyles]}>المسار السنوي</Text>
+          <FontAwesome5 name="trophy" size={19} color="#d69e16" />
         </View>
 
         <View style={styles.pathCard}>

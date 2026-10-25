@@ -65,7 +65,7 @@ export default function LoginPage() {
               <Church size={27} strokeWidth={1.7} />
             </div>
             <div>
-              <p className="mb-1 text-xs font-bold text-primary-700">القديس سيرافيم</p>
+              <p className="mb-1 text-xs font-bold text-primary-700">القديس باييسيوس الآثوسي</p>
               <h1 className="text-2xl font-bold text-ink">تسجيل الدخول</h1>
               <p className="mt-1 text-sm text-muted">لوحة الإدارة</p>
             </div>

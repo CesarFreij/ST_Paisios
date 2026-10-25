@@ -1,9 +1,10 @@
-const STORAGE_KEY = 'st-seraphim-admin'
+const STORAGE_KEY = 'st-paisios-admin'
+const LEGACY_STORAGE_KEY = 'st-seraphim-admin'
 
 const initialData = {
   admin: {
     password: '123456',
-    appName: 'القديس سيرافيم',
+    appName: 'القديس باييسيوس الآثوسي',
     appLogo: null,
     animationsEnabled: true,
     theme: 'light',
@@ -108,13 +109,29 @@ const initialData = {
 
 const loadData = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (stored) {
-      return JSON.parse(stored)
+      const parsed = JSON.parse(stored)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const data = {
+          ...initialData,
+          ...parsed,
+          admin: { ...initialData.admin, ...parsed.admin },
+          auth: { ...initialData.auth, ...parsed.auth },
+          ranking: { ...initialData.ranking, ...parsed.ranking },
+          verses: Array.isArray(parsed.verses) ? parsed.verses : initialData.verses,
+          questions: Array.isArray(parsed.questions) ? parsed.questions : initialData.questions,
+          exams: Array.isArray(parsed.exams) ? parsed.exams : initialData.exams,
+          users: Array.isArray(parsed.users) ? parsed.users : initialData.users,
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+        return data
+      }
     }
   } catch (error) {
     console.warn('فشل تحميل البيانات من LocalStorage', error)
   }
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData))
   return initialData
 }

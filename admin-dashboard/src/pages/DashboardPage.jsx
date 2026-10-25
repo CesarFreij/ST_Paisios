@@ -37,7 +37,7 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32 }}>
         <p className="mb-2 text-sm font-bold text-primary-700">مساحة العمل</p>
         <h2 id="workspace-title" className="text-2xl font-bold leading-snug text-ink sm:text-3xl">
-          مرحبًا بك في لوحة إدارة القديس سيرافيم
+          مرحبًا بك في لوحة إدارة القديس باييسيوس الآثوسي
         </h2>
         <p className="mt-2 text-base leading-7 text-muted">
           نظرة عامة ومباشرة على نشاط النظام والمحتوى الروحي والتسجيلي.

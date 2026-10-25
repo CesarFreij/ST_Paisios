@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrate:daily-question-submissions": "node scripts/migrateDailyQuestionSubmissions.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

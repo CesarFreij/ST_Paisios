@@ -20,20 +20,20 @@ export default function QuizResult() {
       ? 'جارٍ حفظ نتيجتك...'
       : 'لم يتم حفظ النتيجة؛ هذا الاختبار غير مرتبط بسجل على الخادم.'
   );
-  const returnToQuizzes = useCallback(() => {
+  const returnToHome = useCallback(() => {
     navigation.reset({
-      index: 1,
-      routes: [{ name: 'Home' }, { name: 'WeeklyExam' }],
+      index: 0,
+      routes: [{ name: 'Home' }],
     });
   }, [navigation]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      returnToQuizzes();
+      returnToHome();
       return true;
     });
     return () => backHandler.remove();
-  }, [returnToQuizzes]);
+  }, [returnToHome]);
 
   const correctCount = questions.filter((question, index) => (question.correctOptionIndex ?? question.correctAnswer) === answers[index]).length;
   const wrongCount = questions.length - correctCount;
@@ -58,7 +58,7 @@ export default function QuizResult() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={returnToQuizzes}>
+        <TouchableOpacity style={styles.backButton} onPress={returnToHome}>
           <FontAwesome5 name="chevron-right" size={20} color="#348cb2" />
           <Text style={styles.backText}>رجوع</Text>
         </TouchableOpacity>
@@ -91,8 +91,8 @@ export default function QuizResult() {
 
       <Text style={styles.noteText}>{submissionMessage}</Text>
 
-      <TouchableOpacity style={styles.homeButton} onPress={returnToQuizzes} activeOpacity={0.8}>
-        <Text style={styles.homeButtonText}>العودة إلى الاختبارات</Text>
+      <TouchableOpacity style={styles.homeButton} onPress={returnToHome} activeOpacity={0.8}>
+        <Text style={styles.homeButtonText}>العودة إلى الرئيسية</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );

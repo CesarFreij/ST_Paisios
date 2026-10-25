@@ -40,7 +40,7 @@ const formatPointTimestamp = (value) => {
 
 function getSessionUser() {
   try {
-    return JSON.parse(localStorage.getItem('st_seraphim_user') || 'null')
+    return JSON.parse(localStorage.getItem('st_paisios_user') || 'null')
   } catch {
     return null
   }

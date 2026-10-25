@@ -32,7 +32,7 @@ export default function Header({ adminName = 'المسؤول' }) {
       className="flex min-h-23 items-center justify-between gap-4 border-b border-line bg-white px-4 py-4 sm:px-6 lg:px-10"
     >
       <div className="min-w-0">
-        <p className="mb-1 text-xs font-medium text-muted">القديس سيرافيم <span className="px-1 text-brass">/</span> لوحة الإدارة</p>
+        <p className="mb-1 text-xs font-medium text-muted">القديس باييسيوس الآثوسي <span className="px-1 text-brass">/</span> لوحة الإدارة</p>
         <h1 className="truncate text-xl font-bold text-ink sm:text-2xl">{pageTitle}</h1>
       </div>
 

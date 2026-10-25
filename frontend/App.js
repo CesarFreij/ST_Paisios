@@ -7,28 +7,71 @@ import ActiveQuizScreen from './src/screens/main/Quizzes/ActiveQuizScreen';
 import AchievementsScreen from './src/screens/main/Achievements/AchievementsScreen';
 import Quiz from './src/screens/main/Quiz/Quiz';
 import QuizResult from './src/screens/main/QuizResult/QuizResult';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import LoginRegister from './src/screens/auth/LoginRegister';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import OfflineBanner from './src/components/OfflineBanner/OfflineBanner';
+import authService from './src/services/authService';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef();
 
 export default function App() {
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
+  const shouldNavigateToHome = useRef(false);
+
+  const navigateToHomeIfReady = useCallback(() => {
+    if (shouldNavigateToHome.current && navigationRef.isReady()) {
+      shouldNavigateToHome.current = false;
+      navigationRef.resetRoot({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSavedToken = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        if (isMounted && user) {
+          shouldNavigateToHome.current = true;
+          navigateToHomeIfReady();
+        }
+      } catch (error) {
+        console.error('Failed to check the saved authentication token:', error);
+      } finally {
+        if (isMounted) {
+          setIsCheckingToken(false);
+        }
+      }
+    };
+
+    checkSavedToken();
+    return () => {
+      isMounted = false;
+    };
+  }, [navigateToHomeIfReady]);
+
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: '#000' }}>
-        <NavigationContainer>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+        <NavigationContainer ref={navigationRef} onReady={navigateToHomeIfReady}>
+          <View style={{ flex: 1, backgroundColor: '#000' }}>
             <StatusBar style="light" />
             <Stack.Navigator
               initialRouteName="LoginRegister"
               screenOptions={{ headerShown: false, animation: 'slide_from_left' }}
             >
-              <Stack.Screen name="LoginRegister" component={LoginRegister} />
+              <Stack.Screen name="LoginRegister">
+                {(props) => <LoginRegister {...props} isCheckingToken={isCheckingToken} />}
+              </Stack.Screen>
               <Stack.Screen name="Home" component={HomeScreen} />
               <Stack.Screen name="Points" component={PointsScreen} />
               <Stack.Screen name="Rank" component={RankScreen} />
@@ -38,7 +81,7 @@ export default function App() {
               <Stack.Screen name="Quiz" component={Quiz} />
               <Stack.Screen name="QuizResult" component={QuizResult} />
             </Stack.Navigator>
-          </SafeAreaView>
+          </View>
         </NavigationContainer>
         <OfflineBanner />
       </View>

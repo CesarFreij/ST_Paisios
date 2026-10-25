@@ -1,7 +1,7 @@
 import api from '../api/apiClient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const TOKEN_KEY = 'st_seraphim_token'
+const TOKEN_KEY = 'st_paisios_token'
 
 const saveAuth = async (token) => {
   await AsyncStorage.setItem(TOKEN_KEY, token)

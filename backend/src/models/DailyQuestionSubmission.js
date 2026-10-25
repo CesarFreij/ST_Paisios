@@ -14,6 +14,11 @@ const dailyQuestionSubmissionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    localDate: {
+      type: String,
+      required: true,
+      match: /^\d{4}-\d{2}-\d{2}$/,
+    },
     selectedOption: {
       type: String,
       required: true,
@@ -38,6 +43,12 @@ const dailyQuestionSubmissionSchema = new mongoose.Schema(
 )
 
 dailyQuestionSubmissionSchema.index({ questionId: 1, submittedAt: -1 })
-dailyQuestionSubmissionSchema.index({ userId: 1, questionId: 1 }, { unique: true })
+dailyQuestionSubmissionSchema.index(
+  { userId: 1, localDate: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { localDate: { $type: 'string' } },
+  }
+)
 
 module.exports = mongoose.model('DailyQuestionSubmission', dailyQuestionSubmissionSchema)

@@ -27,8 +27,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttonCompleted: {
-        backgroundColor: 'rgba(255, 165, 0, 0.30)',
-        borderColor: '#FFA500',
+        backgroundColor: 'rgba(135, 206, 235, 0.33)',
+        borderColor: 'rgba(135, 206, 235, 0.33)',
     },
 
     iconWrapper: {

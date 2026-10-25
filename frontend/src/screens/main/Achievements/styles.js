@@ -19,6 +19,7 @@ const styles = StyleSheet.create({
     color: '#0b3d91',
     fontSize: 28,
     fontWeight: 'bold',
+    direction: 'ltr'
   },
   backButton: {
     flexDirection: 'row-reverse',
@@ -42,17 +43,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionHeading: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
     marginBottom: 14,
     marginTop: 8,
   },
   sectionTitle: {
-    flex: 1,
     color: '#0b3d91',
     fontSize: 21,
     fontWeight: '800',
+    direction: 'ltr'
   },
   stateContainer: {
     flex: 1,
@@ -108,12 +109,14 @@ const styles = StyleSheet.create({
     color: '#0b3d91',
     fontSize: 16,
     fontWeight: '800',
+    direction: 'ltr'
   },
   cardDescription: {
     marginTop: 4,
     color: '#718198',
     fontSize: 12,
     lineHeight: 18,
+    direction: 'ltr'
   },
   starsRow: {
     flexDirection: 'row',
@@ -170,13 +173,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   pathSummary: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     marginBottom: 14,
   },
   pointsTotal: {
     color: '#0b3d91',
     fontSize: 19,
     fontWeight: '900',
+    direction: 'ltr'
   },
   currentTitle: {
     marginTop: 5,
@@ -261,6 +265,7 @@ const styles = StyleSheet.create({
     color: '#63738f',
     fontSize: 13,
     lineHeight: 20,
+    alignSelf: 'center'
   },
 })
 

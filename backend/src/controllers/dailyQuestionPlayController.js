@@ -4,10 +4,17 @@ const DailyQuestionSubmission = require('../models/DailyQuestionSubmission')
 const User = require('../models/User')
 const PointLog = require('../models/PointLog')
 
-const isLocalDate = (value) => {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const date = new Date(`${value}T00:00:00.000Z`)
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+const DAILY_QUESTION_TIME_ZONE = 'Asia/Damascus'
+
+const getCurrentLocalDate = () => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: DAILY_QUESTION_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
+  return `${values.year}-${values.month}-${values.day}`
 }
 
 const findQuestionForDate = (questionId, localDate) => {
@@ -21,25 +28,41 @@ const findQuestionForDate = (questionId, localDate) => {
 }
 
 const getTodayDailyQuestion = async (req, res) => {
-  const { localDate } = req.query
-  if (!isLocalDate(localDate)) {
+  console.log('Received request with query:', req.query)
+  const requestedUserId = req.query.user_id ?? req.query.userId
+  if (typeof requestedUserId !== 'string' || !requestedUserId.trim()) {
     return res.status(400).json({
       success: false,
-      message: 'A valid localDate in YYYY-MM-DD format is required.',
+      message: 'A user_id query parameter is required.',
     })
   }
+  if (!req.user?._id) {
+    return res.status(401).json({ success: false, message: 'Unauthorized.' })
+  }
+  if (requestedUserId.trim() !== String(req.user._id)) {
+    return res.status(403).json({ success: false, message: 'The requested user does not match the authenticated user.' })
+  }
 
+  const localDate = getCurrentLocalDate()
   try {
-    const [question, user] = await Promise.all([
-      findQuestionForDate(null, localDate).select('question options points'),
+    const question = await findQuestionForDate(null, localDate).select('question options')
+    if (!question) {
+      return res.status(200).json({
+        has_answered_today: false,
+        question: null,
+      })
+    }
+
+    const [user, submission] = await Promise.all([
       User.findById(req.user._id).select('lastDailyQuestionDate answeredDailyQuestionToday'),
+      DailyQuestionSubmission.findOne({ userId: req.user._id, localDate }).select('_id').lean(),
     ])
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' })
     }
 
-    const hasAnsweredToday = user.lastDailyQuestionDate === localDate
+    const hasAnsweredToday = Boolean(submission) || user.lastDailyQuestionDate === localDate
     if (user.answeredDailyQuestionToday && !hasAnsweredToday) {
       await User.updateOne(
         {
@@ -52,18 +75,16 @@ const getTodayDailyQuestion = async (req, res) => {
     }
 
     return res.status(200).json({
-      success: true,
-      data: {
-        question: question
-          ? {
-              id: question._id,
-              question: question.question,
-              options: question.options,
-              points: question.points ?? 1,
-            }
-          : null,
-        hasAnsweredToday,
-      },
+      has_answered_today: hasAnsweredToday,
+      question: hasAnsweredToday
+        ? null
+        : {
+            id: question._id,
+            question: question.question,
+            options: question.options,
+            points: 1,
+          },
+      localDate,
     })
   } catch (error) {
     console.error(error)
@@ -72,16 +93,16 @@ const getTodayDailyQuestion = async (req, res) => {
 }
 
 const submitDailyQuestion = async (req, res) => {
-  const { questionId, selectedOption, localDate } = req.body || {}
+  const { questionId, selectedOption } = req.body || {}
+  const localDate = getCurrentLocalDate()
   if (
     !mongoose.isValidObjectId(questionId) ||
-    !isLocalDate(localDate) ||
     !Number.isInteger(selectedOption) ||
     selectedOption < 0
   ) {
     return res.status(400).json({
       success: false,
-      message: 'A valid questionId, selectedOption, and localDate are required.',
+      message: 'A valid questionId and selectedOption are required.',
     })
   }
 
@@ -99,10 +120,20 @@ const submitDailyQuestion = async (req, res) => {
     }
 
     const isCorrect = selectedOption === question.correctOptionIndex
-    const awardedPoints = isCorrect ? question.points ?? 1 : 0
+    const awardedPoints = isCorrect ? 1 : 0
     let user
     let submittedAt
     await session.withTransaction(async () => {
+      const existingSubmission = await DailyQuestionSubmission.findOne({
+        userId: req.user._id,
+        localDate,
+      }).select('_id').session(session).lean()
+      if (existingSubmission) {
+        const error = new Error('You have already answered today’s daily question.')
+        error.code = 'DAILY_QUESTION_ALREADY_ANSWERED'
+        throw error
+      }
+
       user = await User.findOne(
         { _id: req.user._id, lastDailyQuestionDate: { $ne: localDate } },
       ).session(session)
@@ -132,6 +163,7 @@ const submitDailyQuestion = async (req, res) => {
       await DailyQuestionSubmission.create([{
         userId: req.user._id,
         questionId: question._id,
+        localDate,
         selectedOption: question.options[selectedOption],
         isCorrect,
         pointsEarned: awardedPoints,
@@ -148,12 +180,15 @@ const submitDailyQuestion = async (req, res) => {
       }
     })
 
+    const updatedPoints = user.totalPoints ?? 0
     return res.status(200).json({
       success: true,
+      is_correct: isCorrect,
+      updated_points: updatedPoints,
       data: {
         isCorrect,
         awardedPoints,
-        totalPoints: user.totalPoints ?? 0,
+        totalPoints: updatedPoints,
         quizPoints: user.quizPoints ?? 0,
         submittedAt,
       },

@@ -50,7 +50,7 @@ const calculatePercentage = (completedDays, totalDays) => {
 
 const formatArabicPoints = (points) => {
     const count = Number(points) || 0;
-    if (count === 1) return 'نقطة';
+    if (count === 1) return 'نقطة واحدة';
     if (count === 2) return 'نقطتان';
     if (count >= 3 && count <= 10) return `${count} نقاط`;
     return `${count} نقطة`;

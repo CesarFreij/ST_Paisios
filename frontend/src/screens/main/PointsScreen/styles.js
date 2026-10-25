@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: '#0b3d91',
         marginBottom: 18,
+        textAlign: 'left',
     },
     detailItem: {
         marginBottom: 18,
@@ -112,11 +113,15 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#162d50',
         flex: 1,
+        textAlign: 'left',
+        writingDirection: 'rtl',
     },
     detailPoints: {
         fontSize: 16,
         fontWeight: '700',
         color: '#348cb2',
+        textAlign: 'right',
+        writingDirection: 'rtl',
     },
     detailMeta: {
         flexDirection: 'row',
@@ -126,6 +131,8 @@ const styles = StyleSheet.create({
     detailMetaText: {
         fontSize: 14,
         color: '#63738f',
+        textAlign: 'right',
+        writingDirection: 'rtl',
     },
     statsRow: {
         flexDirection: 'row',

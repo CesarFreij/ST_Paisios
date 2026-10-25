@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native'
-import React, { useState, useRef, useEffect } from 'react'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, Alert, ActivityIndicator, Image } from 'react-native'
+import React, { useState, useRef } from 'react'
 import styles from './styles'
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -11,7 +11,7 @@ import authService from '../../services/authService'
 
 const { height } = Dimensions.get('window');
 
-export default function LoginRegister() {
+export default function LoginRegister({ isCheckingToken = false }) {
     const navigation = useNavigation();
     const [usernameLogin, setUsernameLogin] = useState('');
     const [passwordLogin, setPasswordLogin] = useState('');
@@ -20,22 +20,8 @@ export default function LoginRegister() {
     const [confirmPasswordRegister, setConfirmPasswordRegister] = useState('');
     const [showLogin, setShowLogin] = useState(true);
     const [loginError, setLoginError] = useState('');
-
-    useEffect(() => {
-        let mounted = true
-        const checkAuth = async () => {
-            try {
-                const user = await authService.getCurrentUser()
-                if (user && mounted) {
-                    navigation.replace('Home')
-                }
-            } catch (err) {
-                // no-op
-            }
-        }
-        checkAuth()
-        return () => { mounted = false }
-    }, [])
+    const [isLoginLoading, setIsLoginLoading] = useState(false);
+    const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
     const handleLogin = async () => {
         if (!usernameLogin.trim() || !passwordLogin.trim()) {
@@ -45,6 +31,7 @@ export default function LoginRegister() {
         }
 
         setLoginError('');
+        setIsLoginLoading(true);
         try {
             const res = await authService.login(usernameLogin.trim(), passwordLogin)
             if (res && res.success) {
@@ -58,8 +45,35 @@ export default function LoginRegister() {
         } catch (err) {
             const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
             Alert.alert('خطأ', msg)
+        } finally {
+            setIsLoginLoading(false);
         }
     };
+
+    const handleRegister = async () => {
+        if (!usernameRegister.trim() || !passwordRegister || !confirmPasswordRegister) {
+            Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
+            return
+        }
+
+        setIsRegisterLoading(true)
+        try {
+            const res = await authService.register(usernameRegister.trim(), passwordRegister, confirmPasswordRegister)
+            if (res && res.success) {
+                const { token } = res.data
+                await authService.saveAuth(token)
+                navigation.replace('Home')
+            } else {
+                const msg = (res && res.message) || 'فشل التسجيل'
+                Alert.alert('خطأ', msg)
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
+            Alert.alert('خطأ', msg)
+        } finally {
+            setIsRegisterLoading(false)
+        }
+    }
     const beforeTopAnim = useRef(new Animated.Value(0)).current;
     const togglePanelTopAnim = useRef(new Animated.Value(0)).current;
     const togglePanelBottomAnim = useRef(new Animated.Value(0)).current;
@@ -117,6 +131,7 @@ export default function LoginRegister() {
             setShowLogin(prev => !prev);
         }, 1200);
     };
+
     return (
         <LinearGradient
             colors={['#e2e2e2', '#c9d6ff']}
@@ -145,6 +160,7 @@ export default function LoginRegister() {
                                             textAlign='right' 
                                             value={usernameLogin} 
                                             onChangeText={setUsernameLogin}
+                                            editable={!isCheckingToken}
                                             required
                                             />
                                             <FontAwesome 
@@ -162,6 +178,7 @@ export default function LoginRegister() {
                                             textAlign='right' 
                                             value={passwordLogin} 
                                             onChangeText={setPasswordLogin}
+                                            editable={!isCheckingToken}
                                             required
                                             />
                                             <TouchableOpacity
@@ -177,12 +194,15 @@ export default function LoginRegister() {
                                         <TouchableOpacity 
                                         style={styles.button} 
                                         onPress={handleLogin} 
+                                        disabled={isCheckingToken || isLoginLoading}
                                         activeOpacity={0.8}
                                         >
-                                            <Text style={styles.text}>تسجيل الدخول</Text>
+                                            {isCheckingToken || isLoginLoading
+                                                ? <ActivityIndicator color="#ffffff" />
+                                                : <Text style={styles.text}>تسجيل الدخول</Text>}
                                         </TouchableOpacity>
                                         {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
-                                        <Text style={styles.paragraph}>فكما التاجر يبيع ويشتري ليربح ويكسب ويكدّس الأموال، كذلك على المؤمن أن يعمل نهارًا وليلًا ليجتني الروح القدس.</Text>
+                                        <Text style={styles.paragraph}>صلاة يسوع القصيرة (يا ربي يسوع المسيح، ابن الله، ارحمني أنا الخاطئ) هي أمضى سلاح ضد الأفكار الشريرة. رددها باستمرار، فيهرب الشيطان ويستنير العقل.</Text>
                                     </>
                                 ) : (
                                     <>
@@ -245,31 +265,15 @@ export default function LoginRegister() {
                                         </View>
                                         <TouchableOpacity 
                                         style={styles.button} 
-                                        onPress={async () => {
-                                            if (!usernameRegister.trim() || !passwordRegister || !confirmPasswordRegister) {
-                                                Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
-                                                return
-                                            }
-                                            try {
-                                                const res = await authService.register(usernameRegister.trim(), passwordRegister, confirmPasswordRegister)
-                                                if (res && res.success) {
-                                                    const { token } = res.data
-                                                    await authService.saveAuth(token)
-                                                    navigation.replace('Home')
-                                                } else {
-                                                    const msg = (res && res.message) || 'فشل التسجيل'
-                                                    Alert.alert('خطأ', msg)
-                                                }
-                                            } catch (err) {
-                                                const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
-                                                Alert.alert('خطأ', msg)
-                                            }
-                                        }}
+                                        onPress={handleRegister}
+                                        disabled={isRegisterLoading}
                                         activeOpacity={0.8}
                                         >
-                                            <Text style={styles.text}>تسجيل</Text>
+                                            {isRegisterLoading
+                                                ? <ActivityIndicator color="#ffffff" />
+                                                : <Text style={styles.text}>تسجيل</Text>}
                                         </TouchableOpacity>
-                                        <Text style={styles.paragraph}>القدِّيسون ليسوا مخلوقين من مادّةٍ أخرى، بل هم بشرٌ مثلنا تمامًا. الفرق أنَّهم أخذوا مسألة خلاصهم على محمل الجدّ.</Text>
+                                        <Text style={styles.paragraph}>الصلاة هي أكسجين الروح، وبدونها يختنق الإنسان روحياً وسط هموم الحياة ومشاكلها.</Text>
                                     </>
                                 )}
                             </View>
@@ -277,16 +281,16 @@ export default function LoginRegister() {
                         <View style={styles.toggleBox}>
                             <Animated.View style={[styles.before, { top: beforeTop }]} />
                             <Animated.View style={[styles.togglePanel, { top: togglePanelTop } ]}> 
-                                <Text style={styles.toggletitle}>فرقة القديس سيرافيم ساروفسكي</Text>
-                                <Text style={styles.toggleParagraph}>الصف السابع</Text>
-                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8}>
+                                <Text style={styles.toggletitle}>فرقة القديس باييسيوس الآثوسي</Text>
+                                <Text style={styles.toggleParagraph}>الصف الثامن</Text>
+                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8} disabled={isCheckingToken}>
                                     <Text style={styles.toggleTextButton}>تسجيل</Text>
                                 </TouchableOpacity>
                             </Animated.View>
                             <Animated.View style={[styles.togglePanel, { bottom: togglePanelBottom } ]}> 
-                                <Text style={styles.toggletitle}>فرقة القديس سيرافيم ساروفسكي</Text>
-                                <Text style={styles.toggleParagraph}>الصف السابع</Text>
-                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8}>
+                                <Text style={styles.toggletitle}>فرقة القديس باييسيوس الآثوسي</Text>
+                                <Text style={styles.toggleParagraph}>الصف الثامن</Text>
+                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8} disabled={isCheckingToken}>
                                     <Text style={styles.toggleTextButton}>تسجيل الدخول</Text>
                                 </TouchableOpacity>
                             </Animated.View>

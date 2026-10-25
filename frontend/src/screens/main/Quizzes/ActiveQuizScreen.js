@@ -49,6 +49,13 @@ export default function ActiveQuizScreen() {
     ? receivedOffset
     : new Date(serverNow).getTime() - Date.now()
 
+  const returnToExams = useCallback(() => {
+    navigation.reset({
+      index: 1,
+      routes: [{ name: 'Home' }, { name: 'WeeklyExam' }],
+    })
+  }, [navigation])
+
   const submitAttempt = useCallback(async (timedOut = false) => {
     if (submittingRef.current || result || !submissionId || !quiz?.id) return
     submittingRef.current = true
@@ -200,7 +207,7 @@ export default function ActiveQuizScreen() {
         visible={Boolean(result)}
         transparent
         animationType="fade"
-        onRequestClose={() => navigation.replace('WeeklyExam')}
+        onRequestClose={returnToExams}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.resultModal}>
@@ -216,7 +223,7 @@ export default function ActiveQuizScreen() {
             <Text style={styles.resultStatus}>
               {result?.status === 'timed_out' ? 'تم التسليم تلقائيًا عند انتهاء الوقت.' : 'اكتمل الاختبار بنجاح.'}
             </Text>
-            <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.replace('WeeklyExam')}>
+            <TouchableOpacity style={styles.primaryButton} onPress={returnToExams}>
               <Text style={styles.primaryButtonText}>العودة إلى الاختبارات</Text>
             </TouchableOpacity>
           </View>
