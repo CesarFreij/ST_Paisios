@@ -25,7 +25,7 @@ export default function ModalScreen() {
                 !data ||
                 !currentUser ||
                 !Number.isFinite(Number(currentUser.totalPoints)) ||
-                !Number.isFinite(Number(data.currentRank)) ||
+                !Number.isFinite(Number(data.rank)) ||
                 typeof data.currentTitle !== 'string' ||
                 typeof data.quizStatus !== 'string'
             ) {
@@ -33,7 +33,7 @@ export default function ModalScreen() {
             }
             setSummary({
                 totalPoints: Number(currentUser.totalPoints),
-                currentRank: Number(data.currentRank),
+                rank: Number(data.rank),
                 currentTitle: data.currentTitle,
                 quizStatus: data.quizStatus,
             });
@@ -143,7 +143,7 @@ export default function ModalScreen() {
                                 <View style={styles.menuSummary}>
                                     {summaryLoading ? <ActivityIndicator size="small" color="#f39c12" /> : (
                                         <Text style={[styles.pointsValue, { color: '#f39c12', backgroundColor: '#f39c1220' }]} numberOfLines={1} adjustsFontSizeToFit ellipsizeMode="tail">
-                                            {summary ? `#${summary.currentRank}` : '—'}
+                                            {summary ? `#${summary.rank}` : '—'}
                                         </Text>
                                     )}
                                 </View>

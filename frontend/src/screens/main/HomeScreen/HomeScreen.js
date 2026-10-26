@@ -148,7 +148,6 @@ export default function HomeScreen() {
         useCallback(() => {
             let active = true;
             let requestInFlight = false;
-            let intervalId = null;
 
             const refreshUser = async (consumePointUpdate) => {
                 if (!active || requestInFlight) return null;
@@ -247,13 +246,9 @@ export default function HomeScreen() {
             };
 
             loadHomeData();
-            intervalId = setInterval(() => {
-                refreshUser(true);
-            }, 1000);
 
             return () => {
                 active = false;
-                if (intervalId) clearInterval(intervalId);
             };
         }, [loadDailyQuestion]),
     );

@@ -53,28 +53,26 @@ const getSettingsSummary = async (req, res) => {
     }
 
     const totalPoints = Number(user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0))
-    const effectivePoints = {
-      $ifNull: ['$totalEarnedPoints', { $max: [{ $ifNull: ['$totalPoints', 0] }, 0] }],
-    }
+    const userPoints = user.totalPoints ?? 0
     const [usersAhead, quizStatus] = await Promise.all([
-      User.aggregate([
-        {
-          $match: {
-            role: 'user',
-            $expr: { $gt: [effectivePoints, totalPoints] },
-          },
-        },
-        { $count: 'count' },
-      ]),
+      User.countDocuments({
+        role: 'user',
+        $or: [
+          { totalPoints: { $gt: userPoints } },
+          { totalPoints: userPoints, _id: { $lt: user._id } },
+        ],
+      }),
       getShortQuizStatus(new Date()),
     ])
     const title = getRewardMilestone(totalPoints)?.name || 'مبتدئ'
+    const rank = usersAhead + 1
 
     return res.status(200).json({
       success: true,
       data: {
         totalPoints,
-        currentRank: (usersAhead[0]?.count ?? 0) + 1,
+        rank,
+        currentRank: rank,
         currentTitle: title,
         quizStatus,
       },

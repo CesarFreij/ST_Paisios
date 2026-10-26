@@ -143,7 +143,7 @@ const authController = {
         user = await User.findByIdAndUpdate(
           req.user._id,
           { $set: { hasUnseenPointsUpdate: false, unseenPointsDifference: 0 } },
-          { new: false }
+          { returnDocument: 'before' }
         ).select('username totalPoints title role createdAt hasUnseenPointsUpdate unseenPointsDifference')
 
         if (!user) {
