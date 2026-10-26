@@ -6,7 +6,10 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 import api from '../../../api/apiClient'
 import { formatArabicPoints } from '../../../utils/formatArabicPoints'
-import { getCurrentRewardMilestone } from '../../../utils/rewardMilestones'
+import {
+  defaultRewardMilestones,
+  getCurrentRewardMilestone,
+} from '../../../utils/rewardMilestones'
 import styles from './styles'
 import { useUserPoints } from '../../../context/UserPointsContext'
 
@@ -35,13 +38,6 @@ const defaultAchievementRewards = {
   mercy: [30, 100, 500],
   perfectCombo: [30, 100, 500],
 }
-const defaultGrandPrizeMilestones = [
-  { level: 1, name: 'مواظب', pointsNeeded: 1000 },
-  { level: 2, name: 'متقدم', pointsNeeded: 3500 },
-  { level: 3, name: 'متميز', pointsNeeded: 8000 },
-  { level: 4, name: 'رائد', pointsNeeded: 14000 },
-  { level: 5, name: 'بطل السنة', pointsNeeded: 20000 },
-]
 const achievementCountKeys = {
   prayer: 'prayerCount',
   fasting: 'fastingCount',
@@ -90,7 +86,7 @@ export default function AchievementsScreen() {
             ...defaultAchievementRewards,
             ...result.globalConfig?.achievementRewards,
           }
-          const milestones = result.globalConfig?.grandPrizeMilestones ?? defaultGrandPrizeMilestones
+          const milestones = result.globalConfig?.grandPrizeMilestones ?? defaultRewardMilestones
           const userStats = result.userStats ?? result.progress ?? {}
           const userAchievements = result.userAchievements ?? achievements
           const achievementsProgress = Object.fromEntries(
@@ -160,14 +156,13 @@ export default function AchievementsScreen() {
   const userStats = payload?.userStats
   const userAchievements = payload?.userAchievements
   const milestones = globalConfig?.grandPrizeMilestones ?? []
-  const annualTrackPoints = Number(user?.maxPoints || user?.totalPoints || 0)
-  const currentPoints = Number(user?.totalPoints || 0)
+  const totalPoints = Number(user?.totalPoints ?? userStats?.totalPoints ?? 0)
   const highestMilestone = milestones.reduce(
     (highest, milestone) => Math.max(highest, Number(milestone.pointsNeeded) || 0),
     0
   )
   const trailPercent = highestMilestone > 0
-    ? Math.min(100, (annualTrackPoints / highestMilestone) * 100)
+    ? Math.min(100, Math.max(0, (totalPoints / highestMilestone) * 100))
     : 0
 
   useEffect(() => {
@@ -178,8 +173,8 @@ export default function AchievementsScreen() {
     }).start()
   }, [trailAnimation, trailPercent])
 
-  const currentMilestone = getCurrentRewardMilestone(currentPoints, milestones)
-  const nextMilestone = milestones.find((milestone) => annualTrackPoints < milestone.pointsNeeded)
+  const currentMilestone = getCurrentRewardMilestone(totalPoints, milestones)
+  const nextMilestone = milestones.find((milestone) => totalPoints < milestone.pointsNeeded)
 
   if (loading) {
     return (
@@ -334,7 +329,7 @@ export default function AchievementsScreen() {
         <View style={styles.pathCard}>
           <View style={styles.pathSummary}>
             <Text style={[styles.pointsTotal, textStyles]}>
-              {formatPoints(annualTrackPoints)} نقطة
+              {formatPoints(totalPoints)} نقطة
             </Text>
             {currentMilestone ? (
               <Text style={[styles.currentTitle, textStyles]}>{currentMilestone.name}</Text>
@@ -342,7 +337,7 @@ export default function AchievementsScreen() {
           </View>
           <View style={styles.pathTrack}>
             {milestones.map((milestone, index) => {
-              const reached = annualTrackPoints >= milestone.pointsNeeded
+              const reached = totalPoints >= milestone.pointsNeeded
               const segmentStart = (index / Math.max(milestones.length - 1, 1)) * 100
               const segmentEnd = ((index + 1) / Math.max(milestones.length - 1, 1)) * 100
               return (
@@ -387,7 +382,7 @@ export default function AchievementsScreen() {
           </View>
           <Text style={[styles.pathHint, textStyles]}>
             {nextMilestone
-              ? `باقي ${formatPoints(nextMilestone.pointsNeeded - annualTrackPoints)} نقطة للوصول إلى ${nextMilestone.name}`
+              ? `باقي ${formatPoints(nextMilestone.pointsNeeded - totalPoints)} نقطة للوصول إلى ${nextMilestone.name}`
               : 'أحسنت! وصلت إلى أعلى مستوى في المسار السنوي.'}
           </Text>
         </View>

@@ -47,11 +47,6 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    maxPoints: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
     hasUnseenPointsUpdate: {
       type: Boolean,
       default: false,
@@ -130,14 +125,6 @@ userSchema.methods.initializePointTotals = function initializePointTotals() {
 userSchema.pre('validate', function keepPointTotalsConsistent() {
   this.initializePointTotals()
   this.totalPoints = this.totalEarnedPoints - this.totalDeductedPoints
-  this.maxPoints = Math.max(this.maxPoints ?? 0, this.totalPoints, 0)
-})
-
-userSchema.post('init', function initializeMissingMaxPoints() {
-  if (this.$isDefault('maxPoints')) {
-    // Keep annual-track progress earned before maxPoints was introduced.
-    this.maxPoints = Math.max(this.totalEarnedPoints ?? 0, this.totalPoints ?? 0, 0)
-  }
 })
 
 module.exports = mongoose.model('User', userSchema)

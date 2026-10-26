@@ -172,7 +172,7 @@ const getUsers = async (req, res) => {
 
     const [queriedUsers, totalItems, allCount, roleCounts] = await Promise.all([
       User.find(filter)
-        .select('_id username email title role createdAt totalPoints maxPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints')
+        .select('_id username email title role createdAt totalPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints')
         .sort(sortOrder)
         .skip(skip)
         .limit(limit)
@@ -201,16 +201,14 @@ const getUsers = async (req, res) => {
         'perfectDayAchievedLevel',
       ].filter((field) => achievements[field] >= 3).length
       const totalEarnedPoints = user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0)
-      const maxPoints = user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0)
       return {
         ...user,
-        maxPoints,
         totalEarnedPoints,
         totalDeductedPoints: user.totalDeductedPoints ?? Math.max(-(user.totalPoints ?? 0), 0),
         quizPoints: user.quizPoints ?? 0,
         extraPoints: user.extraPoints ?? 0,
         completedAchievements,
-        rewardMilestoneTitle: getRewardMilestone(maxPoints)?.name ?? 'بداية الطريق',
+        rewardMilestoneTitle: getRewardMilestone(user.totalPoints ?? 0)?.name ?? 'بداية الطريق',
       }
     })
     const counts = { all: allCount, owner: 0, admin: 0, user: 0 }
@@ -351,10 +349,6 @@ const adjustUserPoints = async (req, res) => {
         if (isPositive) {
           user.totalEarnedPoints += amount
           user.extraPoints += amount
-          user.maxPoints = Math.max(
-            user.maxPoints || 0,
-            user.totalEarnedPoints - user.totalDeductedPoints
-          )
         } else {
           user.totalDeductedPoints += amount
         }
@@ -392,7 +386,6 @@ const adjustUserPoints = async (req, res) => {
           username: user.username,
           title: user.title,
           totalPoints: user.totalPoints,
-          maxPoints: user.maxPoints,
           totalEarnedPoints: user.totalEarnedPoints,
           totalDeductedPoints: user.totalDeductedPoints,
           extraPoints: user.extraPoints,
@@ -530,10 +523,6 @@ const updateUser = async (req, res) => {
       pointsDifference = requestedTotalPoints - user.totalPoints
       if (pointsDifference > 0) {
         user.totalEarnedPoints += pointsDifference
-        user.maxPoints = Math.max(
-          user.maxPoints || 0,
-          user.totalEarnedPoints - user.totalDeductedPoints
-        )
         pointsLog = {
           userId: user._id,
           amount: pointsDifference,

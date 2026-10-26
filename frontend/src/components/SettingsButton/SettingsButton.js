@@ -6,7 +6,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import authService from '../../services/authService';
 import api from '../../api/apiClient';
 import { useUserPoints } from '../../context/UserPointsContext';
-import { getCurrentRewardMilestone } from '../../utils/rewardMilestones';
+import {
+    defaultRewardMilestones,
+    getCurrentRewardMilestone,
+} from '../../utils/rewardMilestones';
 
 export default function ModalScreen() {
     const { setUser } = useUserPoints();
@@ -24,25 +27,19 @@ export default function ModalScreen() {
             ]);
             const data = response?.data?.data;
             const currentUser = userResponse?.data?.data;
-            if (
-                !data ||
-                !currentUser ||
-                !Number.isFinite(Number(currentUser?.totalPoints ?? 0)) ||
-                !Number.isFinite(Number(data?.rank)) ||
-                !Array.isArray(data?.rewardMilestones) ||
-                typeof data?.quizStatus !== 'string'
-            ) {
-                throw new Error('Invalid settings summary response.');
-            }
-            setUser(currentUser);
+            if (currentUser) setUser(currentUser);
+            const totalPoints = Number(currentUser?.totalPoints ?? 0);
+            const rewardMilestones = Array.isArray(data?.rewardMilestones)
+                ? data.rewardMilestones
+                : defaultRewardMilestones;
             setSummary({
-                totalPoints: Number(currentUser?.totalPoints ?? 0),
+                totalPoints,
                 rank: Number(data?.rank ?? 0),
                 currentTitle: getCurrentRewardMilestone(
-                    Number(currentUser?.totalPoints ?? 0),
-                    data.rewardMilestones
+                    totalPoints,
+                    rewardMilestones
                 )?.name || 'مبتدئ',
-                quizStatus: data.quizStatus,
+                quizStatus: data?.quizStatus ?? '—',
             });
         } catch (error) {
             console.error('Failed to load settings summary:', {

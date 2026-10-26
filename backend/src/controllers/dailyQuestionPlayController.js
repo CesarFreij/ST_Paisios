@@ -164,10 +164,6 @@ const submitDailyQuestion = async (req, res) => {
       if (isCorrect) {
         user.totalEarnedPoints += awardedPoints
         user.quizPoints += awardedPoints
-        user.maxPoints = Math.max(
-          user.maxPoints || 0,
-          user.totalEarnedPoints - user.totalDeductedPoints
-        )
         user.pointNotifications.push({
           amount: awardedPoints,
           isPositive: true,
@@ -207,7 +203,6 @@ const submitDailyQuestion = async (req, res) => {
         isCorrect,
         awardedPoints,
         totalPoints: updatedPoints,
-        maxPoints: user.maxPoints,
         quizPoints: user.quizPoints ?? 0,
         submittedAt,
       },
