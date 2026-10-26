@@ -6,7 +6,6 @@ const WeeklyQuiz = require('../models/WeeklyQuiz')
 const PointTransaction = require('../models/PointTransaction')
 const PointLog = require('../models/PointLog')
 const { getPagination, paginationMetadata } = require('../utils/pagination')
-const { Expo } = require('expo-server-sdk')
 
 const resolveQuizWindow = (quiz) => {
   if (quiz.windowStart && quiz.windowEnd) {
@@ -421,6 +420,7 @@ const adjustUserPoints = async (req, res) => {
 
 const saveExpoPushToken = async (req, res) => {
   try {
+    const { Expo } = await import('expo-server-sdk')
     const { expoPushToken } = req.body || {}
     if (typeof expoPushToken !== 'string' || !Expo.isExpoPushToken(expoPushToken)) {
       return res.status(400).json({ success: false, message: 'A valid Expo push token is required.' })
