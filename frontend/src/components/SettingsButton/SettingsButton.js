@@ -5,8 +5,11 @@ import { useCallback, useState } from 'react'
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import authService from '../../services/authService';
 import api from '../../api/apiClient';
+import { useUserPoints } from '../../context/UserPointsContext';
+import { getCurrentRewardMilestone } from '../../utils/rewardMilestones';
 
 export default function ModalScreen() {
+    const { setUser } = useUserPoints();
     const [settingsVisible, setSettingsVisible] = useState(false);
     const [summary, setSummary] = useState(null);
     const [summaryLoading, setSummaryLoading] = useState(true);
@@ -19,35 +22,40 @@ export default function ModalScreen() {
                 api.get('/api/user/settings-summary'),
                 api.get('/api/auth/me'),
             ]);
-            const data = response.data?.data;
-            const currentUser = userResponse.data?.data;
+            const data = response?.data?.data;
+            const currentUser = userResponse?.data?.data;
             if (
                 !data ||
                 !currentUser ||
-                !Number.isFinite(Number(currentUser.totalPoints)) ||
-                !Number.isFinite(Number(data.rank)) ||
-                typeof data.currentTitle !== 'string' ||
-                typeof data.quizStatus !== 'string'
+                !Number.isFinite(Number(currentUser?.totalPoints ?? 0)) ||
+                !Number.isFinite(Number(data?.rank)) ||
+                !Array.isArray(data?.rewardMilestones) ||
+                typeof data?.quizStatus !== 'string'
             ) {
                 throw new Error('Invalid settings summary response.');
             }
+            setUser(currentUser);
             setSummary({
-                totalPoints: Number(currentUser.totalPoints),
-                rank: Number(data.rank),
-                currentTitle: data.currentTitle,
+                totalPoints: Number(currentUser?.totalPoints ?? 0),
+                rank: Number(data?.rank ?? 0),
+                currentTitle: getCurrentRewardMilestone(
+                    Number(currentUser?.totalPoints ?? 0),
+                    data.rewardMilestones
+                )?.name || 'مبتدئ',
                 quizStatus: data.quizStatus,
             });
         } catch (error) {
             console.error('Failed to load settings summary:', {
-                baseURL: error.config?.baseURL,
-                url: error.config?.url,
-                responseData: error.response?.data,
+                message: error instanceof Error ? error.message : String(error),
+                baseURL: error?.config?.baseURL ?? api.defaults?.baseURL,
+                url: error?.config?.url ?? '/api/user/settings-summary',
+                responseData: error?.response?.data,
             });
             setSummary(null);
         } finally {
             setSummaryLoading(false);
         }
-    }, []);
+    }, [setUser]);
 
     useFocusEffect(
         useCallback(() => {
@@ -79,6 +87,7 @@ export default function ModalScreen() {
     const handleLogout = async () => {
         try {
             await authService.logout();
+            setUser(null);
             setSettingsVisible(false);
             navigation.reset({
                 index: 0,

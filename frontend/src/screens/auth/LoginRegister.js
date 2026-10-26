@@ -157,6 +157,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                             <TextInput 
                                             style={styles.input} 
                                             placeholder='اسم المستخدم' 
+                                            placeholderTextColor="#888888"
                                             textAlign='right' 
                                             value={usernameLogin} 
                                             onChangeText={setUsernameLogin}
@@ -174,6 +175,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                             <TextInput 
                                             style={styles.input} 
                                             placeholder='كلمة المرور' 
+                                            placeholderTextColor="#888888"
                                             secureTextEntry={showPasswordLogin ? false : true} 
                                             textAlign='right' 
                                             value={passwordLogin} 
@@ -211,6 +213,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                             <TextInput 
                                             style={styles.input} 
                                             placeholder='اسم المستخدم' 
+                                            placeholderTextColor="#888888"
                                             textAlign='right' 
                                             value={usernameRegister} 
                                             onChangeText={setUsernameRegister} 
@@ -227,6 +230,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                             <TextInput 
                                             style={styles.input} 
                                             placeholder='كلمة المرور' 
+                                            placeholderTextColor="#888888"
                                             secureTextEntry={showPasswordRegister ? false : true} 
                                             textAlign='right' 
                                             value={passwordRegister} 
@@ -247,6 +251,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                             <TextInput 
                                             style={styles.input} 
                                             placeholder='تأكيد كلمة المرور' 
+                                            placeholderTextColor="#888888"
                                             secureTextEntry={showConfirmPasswordRegister ? false : true} 
                                             textAlign='right' 
                                             value={confirmPasswordRegister} 

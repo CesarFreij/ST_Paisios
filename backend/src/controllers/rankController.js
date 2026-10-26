@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const { getLeaderboardFilter, getUserRank } = require('../utils/ranking')
 
 const getRankings = async (req, res) => {
   try {
@@ -10,10 +11,11 @@ const getRankings = async (req, res) => {
       : 20
     const skip = (page - 1) * limit
 
+    const leaderboardFilter = getLeaderboardFilter(req.user.role)
     const [currentUser, rankedUsers] = await Promise.all([
-      User.findOne({ _id: req.user._id, role: 'user' }).select('_id username totalPoints').lean(),
-      User.find({ role: 'user' })
-        .select('_id username totalPoints')
+      User.findById(req.user._id).select('_id username totalPoints role').lean(),
+      User.find(leaderboardFilter)
+        .select('_id username totalPoints role')
         .sort({ totalPoints: -1, _id: 1 })
         .skip(skip)
         .limit(limit + 1)
@@ -37,13 +39,13 @@ const getRankings = async (req, res) => {
     }))
 
     const currentUserPoints = currentUser.totalPoints ?? 0
-    const usersAhead = await User.countDocuments({
-      role: 'user',
-      $or: [
-        { totalPoints: { $gt: currentUserPoints } },
-        { totalPoints: currentUserPoints, _id: { $lt: currentUser._id } },
-      ],
+    const currentUserIsInLeaderboard = await User.exists({
+      _id: currentUser._id,
+      ...leaderboardFilter,
     })
+    const currentUserRank = currentUserIsInLeaderboard
+      ? await getUserRank(currentUser, leaderboardFilter)
+      : null
 
     return res.status(200).json({
       success: true,
@@ -53,7 +55,8 @@ const getRankings = async (req, res) => {
           id: currentUser._id.toString(),
           name: currentUser.username,
           points: currentUserPoints,
-          rank: usersAhead + 1,
+          rank: currentUserRank,
+          role: currentUser.role,
         },
         page,
         limit,

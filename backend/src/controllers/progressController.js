@@ -151,7 +151,7 @@ const getProgress = async (req, res) => {
         { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
       ).lean(),
       User.findById(req.user._id)
-        .select('_id username title totalPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints pointNotifications')
+        .select('_id username title totalPoints maxPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints pointNotifications')
         .lean(),
       PointTransaction.aggregate([
         { $match: { user: req.user._id } },
@@ -188,12 +188,14 @@ const getProgress = async (req, res) => {
           username: user.username,
           title: user.title,
           totalPoints: user.totalPoints ?? 0,
+          maxPoints: user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0),
           totalEarnedPoints: user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0),
           totalDeductedPoints: user.totalDeductedPoints ?? Math.max(-(user.totalPoints ?? 0), 0),
           quizPoints: user.quizPoints ?? 0,
           extraPoints: user.extraPoints ?? 0,
         },
         totalPoints: user.totalPoints ?? 0,
+        maxPoints: user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0),
         totalEarnedPoints: user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0),
         totalDeductedPoints: user.totalDeductedPoints ?? Math.max(-(user.totalPoints ?? 0), 0),
         quizPoints: user.quizPoints ?? 0,
@@ -238,36 +240,37 @@ const getCalendarDates = async (req, res) => {
 const getRewardsProgress = async (req, res) => {
   try {
     const [user, progress] = await Promise.all([
-      User.findById(req.user._id).select('_id totalPoints totalEarnedPoints totalDeductedPoints').lean(),
+      User.findById(req.user._id).select('_id totalPoints maxPoints totalEarnedPoints totalDeductedPoints').lean(),
       Progress.findOne({ user: req.user._id }).lean(),
     ])
     if (!user) {
       return res.status(404).json({ success: false, message: 'المستخدم غير موجود.' })
     }
 
-    const totalEarnedPoints = user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0)
-    const currentMilestone = getRewardMilestone(totalEarnedPoints)
-    const nextMilestone = grandPrizeMilestones.find((milestone) => totalEarnedPoints < milestone.pointsNeeded) || null
+    const maxPoints = user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0)
+    const currentMilestone = getRewardMilestone(maxPoints)
+    const nextMilestone = grandPrizeMilestones.find((milestone) => maxPoints < milestone.pointsNeeded) || null
     const previousPoints = currentMilestone?.pointsNeeded ?? 0
     const progressPoints = nextMilestone
-      ? Math.min(totalEarnedPoints - previousPoints, nextMilestone.pointsNeeded - previousPoints)
+      ? Math.min(maxPoints - previousPoints, nextMilestone.pointsNeeded - previousPoints)
       : 0
     const requiredPoints = nextMilestone ? nextMilestone.pointsNeeded - previousPoints : 0
 
     return res.status(200).json({
       success: true,
       data: {
-        totalEarnedPoints,
+        maxPoints,
+        totalEarnedPoints: user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0),
         milestones: grandPrizeMilestones.map((milestone) => ({
           ...milestone,
-          reached: totalEarnedPoints >= milestone.pointsNeeded,
+          reached: maxPoints >= milestone.pointsNeeded,
         })),
         currentMilestone,
         nextMilestone,
         segmentProgress: {
           fromPoints: previousPoints,
           toPoints: nextMilestone?.pointsNeeded ?? previousPoints,
-          currentPoints: totalEarnedPoints,
+          currentPoints: maxPoints,
           progressPoints,
           requiredPoints,
           percentage: requiredPoints
@@ -290,7 +293,7 @@ const getMyAchievementsProgress = async (req, res) => {
     const [progress, user] = await Promise.all([
       Progress.findOne({ user: req.user._id }).lean(),
       User.findById(req.user._id)
-        .select('_id totalEarnedPoints totalPoints achievementsProgress')
+        .select('_id totalEarnedPoints totalPoints maxPoints achievementsProgress')
         .lean(),
     ])
 
@@ -335,6 +338,7 @@ const getMyAchievementsProgress = async (req, res) => {
       goodDeedCount: achievementsProgress.goodDeed.currentValue,
       perfectDaysCount: achievementsProgress.perfectDay.currentValue,
       totalEarnedPoints: Number(user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0)),
+      maxPoints: Number(user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0)),
     }
 
     return res.status(200).json({
@@ -457,6 +461,7 @@ const updateProgress = async (req, res) => {
     let progress
     let user
     let totalPoints = req.user.totalPoints
+    let maxPoints = req.user.maxPoints ?? Math.max(req.user.totalEarnedPoints ?? 0, req.user.totalPoints ?? 0, 0)
     let alreadyCompletedToday = false
     let achievementRewards = []
     let perfectMonthRewards = []
@@ -594,9 +599,14 @@ const updateProgress = async (req, res) => {
         const points = actionPoints + achievementPoints + perfectMonthPoints
         if (points > 0) {
           user.totalEarnedPoints += points
+          user.maxPoints = Math.max(
+            user.maxPoints || 0,
+            user.totalEarnedPoints - user.totalDeductedPoints
+          )
         }
         await user.save({ session })
         totalPoints = user.totalPoints
+        maxPoints = user.maxPoints
         if (points > 0) {
           if (pointTransactions.length > 0) {
             await PointTransaction.insertMany(pointTransactions, { session })
@@ -650,6 +660,7 @@ const updateProgress = async (req, res) => {
       data: {
         progress,
         totalPoints,
+        maxPoints,
         baseActionPoints: actionPoints,
         awardedPoints: actionPoints
           + achievementRewards.reduce((total, reward) => total + reward.amount, 0)

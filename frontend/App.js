@@ -14,6 +14,7 @@ import LoginRegister from './src/screens/auth/LoginRegister';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import OfflineBanner from './src/components/OfflineBanner/OfflineBanner';
 import authService from './src/services/authService';
+import { UserPointsProvider } from './src/context/UserPointsContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Stack = createNativeStackNavigator();
@@ -60,6 +61,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
+      <UserPointsProvider>
       <View style={{ flex: 1, backgroundColor: '#000' }}>
         <NavigationContainer ref={navigationRef} onReady={navigateToHomeIfReady}>
           <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -86,6 +88,7 @@ export default function App() {
         </NavigationContainer>
         <OfflineBanner />
       </View>
+      </UserPointsProvider>
     </SafeAreaProvider>
   );
 }

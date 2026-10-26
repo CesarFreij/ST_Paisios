@@ -1,11 +1,12 @@
 const User = require('../models/User')
 const mongoose = require('mongoose')
 const Progress = require('../models/Progress')
-const { getRewardMilestone } = require('../utils/rewards')
+const { rewardMilestones, getRewardMilestone } = require('../utils/rewards')
 const WeeklyQuiz = require('../models/WeeklyQuiz')
 const PointTransaction = require('../models/PointTransaction')
 const PointLog = require('../models/PointLog')
 const { getPagination, paginationMetadata } = require('../utils/pagination')
+const { getLeaderboardFilter, getUserRank } = require('../utils/ranking')
 
 const resolveQuizWindow = (quiz) => {
   if (quiz.windowStart && quiz.windowEnd) {
@@ -46,27 +47,19 @@ const getShortQuizStatus = async (now) => {
 const getSettingsSummary = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .select('_id totalEarnedPoints totalPoints')
+      .select('_id totalEarnedPoints totalPoints role')
       .lean()
     if (!user) {
       return res.status(404).json({ success: false, message: 'المستخدم غير موجود.' })
     }
 
-    const totalPoints = Number(user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0))
-    const userPoints = user.totalPoints ?? 0
-    const [usersAhead, quizStatus] = await Promise.all([
-      User.countDocuments({
-        role: 'user',
-        $or: [
-          { totalPoints: { $gt: userPoints } },
-          { totalPoints: userPoints, _id: { $lt: user._id } },
-        ],
-      }),
+    const totalPoints = Number(user.totalPoints ?? 0)
+    const leaderboardFilter = getLeaderboardFilter(user.role)
+    const [rank, quizStatus] = await Promise.all([
+      getUserRank(user, leaderboardFilter),
       getShortQuizStatus(new Date()),
     ])
     const title = getRewardMilestone(totalPoints)?.name || 'مبتدئ'
-    const rank = usersAhead + 1
-
     return res.status(200).json({
       success: true,
       data: {
@@ -74,6 +67,7 @@ const getSettingsSummary = async (req, res) => {
         rank,
         currentRank: rank,
         currentTitle: title,
+        rewardMilestones,
         quizStatus,
       },
     })
@@ -88,12 +82,7 @@ const getSettingsSummary = async (req, res) => {
 
 const getRankings = async (req, res) => {
   try {
-    const requesterRole = req.user.role
-    const leaderboardFilter = requesterRole === 'owner'
-      ? {}
-      : requesterRole === 'admin'
-        ? { role: { $in: ['user', 'admin'] } }
-        : { role: 'user' }
+    const leaderboardFilter = getLeaderboardFilter(req.user.role)
     const requestedPage = Number.parseInt(req.query.page, 10)
     const requestedLimit = Number.parseInt(req.query.limit, 10)
     const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
@@ -134,14 +123,8 @@ const getRankings = async (req, res) => {
       _id: currentUser._id,
       ...leaderboardFilter,
     })
-    const usersAhead = currentUserIsInLeaderboard
-      ? await User.countDocuments({
-          ...leaderboardFilter,
-          $or: [
-            { totalPoints: { $gt: currentUserPoints } },
-            { totalPoints: currentUserPoints, _id: { $lt: currentUser._id } },
-          ],
-        })
+    const currentUserRank = currentUserIsInLeaderboard
+      ? await getUserRank(currentUser, leaderboardFilter)
       : null
 
     return res.status(200).json({
@@ -152,7 +135,7 @@ const getRankings = async (req, res) => {
           id: currentUser._id.toString(),
           name: currentUser.username,
           points: currentUserPoints,
-          rank: usersAhead === null ? null : usersAhead + 1,
+          rank: currentUserRank,
           role: currentUser.role,
         },
         page,
@@ -189,7 +172,7 @@ const getUsers = async (req, res) => {
 
     const [queriedUsers, totalItems, allCount, roleCounts] = await Promise.all([
       User.find(filter)
-        .select('_id username email title role createdAt totalPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints')
+        .select('_id username email title role createdAt totalPoints maxPoints totalEarnedPoints totalDeductedPoints quizPoints extraPoints')
         .sort(sortOrder)
         .skip(skip)
         .limit(limit)
@@ -218,14 +201,16 @@ const getUsers = async (req, res) => {
         'perfectDayAchievedLevel',
       ].filter((field) => achievements[field] >= 3).length
       const totalEarnedPoints = user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0)
+      const maxPoints = user.maxPoints ?? Math.max(user.totalEarnedPoints ?? 0, user.totalPoints ?? 0, 0)
       return {
         ...user,
+        maxPoints,
         totalEarnedPoints,
         totalDeductedPoints: user.totalDeductedPoints ?? Math.max(-(user.totalPoints ?? 0), 0),
         quizPoints: user.quizPoints ?? 0,
         extraPoints: user.extraPoints ?? 0,
         completedAchievements,
-        rewardMilestoneTitle: getRewardMilestone(totalEarnedPoints)?.name ?? 'بداية الطريق',
+        rewardMilestoneTitle: getRewardMilestone(maxPoints)?.name ?? 'بداية الطريق',
       }
     })
     const counts = { all: allCount, owner: 0, admin: 0, user: 0 }
@@ -366,6 +351,10 @@ const adjustUserPoints = async (req, res) => {
         if (isPositive) {
           user.totalEarnedPoints += amount
           user.extraPoints += amount
+          user.maxPoints = Math.max(
+            user.maxPoints || 0,
+            user.totalEarnedPoints - user.totalDeductedPoints
+          )
         } else {
           user.totalDeductedPoints += amount
         }
@@ -403,6 +392,7 @@ const adjustUserPoints = async (req, res) => {
           username: user.username,
           title: user.title,
           totalPoints: user.totalPoints,
+          maxPoints: user.maxPoints,
           totalEarnedPoints: user.totalEarnedPoints,
           totalDeductedPoints: user.totalDeductedPoints,
           extraPoints: user.extraPoints,
@@ -540,6 +530,10 @@ const updateUser = async (req, res) => {
       pointsDifference = requestedTotalPoints - user.totalPoints
       if (pointsDifference > 0) {
         user.totalEarnedPoints += pointsDifference
+        user.maxPoints = Math.max(
+          user.maxPoints || 0,
+          user.totalEarnedPoints - user.totalDeductedPoints
+        )
         pointsLog = {
           userId: user._id,
           amount: pointsDifference,

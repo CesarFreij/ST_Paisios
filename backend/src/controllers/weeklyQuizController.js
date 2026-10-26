@@ -317,6 +317,10 @@ const submitQuiz = async (req, res) => {
       if (score > 0) {
         user.initializePointTotals()
         user.totalEarnedPoints += score
+        user.maxPoints = Math.max(
+          user.maxPoints || 0,
+          user.totalEarnedPoints - user.totalDeductedPoints
+        )
         user.quizPoints = (user.quizPoints ?? 0) + score
         await user.save({ session })
         await PointTransaction.create([{
@@ -336,6 +340,7 @@ const submitQuiz = async (req, res) => {
       result = {
         submission: submission.toObject(),
         totalPoints: user.totalPoints,
+        maxPoints: user.maxPoints,
         quizPoints: user.quizPoints ?? 0,
       }
     })

@@ -11,6 +11,7 @@ import api from '../../../api/apiClient';
 import { formatArabicPoints } from '../../../utils/formatArabicPoints';
 import { cacheKnownPoints, getKnownPointsCacheKey } from '../../../utils/pointBalanceCache';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUserPoints } from '../../../context/UserPointsContext';
 
 const getCurrentLocalDate = () => {
     const dateParts = new Intl.DateTimeFormat('en-US', {
@@ -33,6 +34,7 @@ const saveDailyAnsweredDate = async (userId, localDate) => {
     }
 };
 export default function HomeScreen() {
+    const { setUser } = useUserPoints();
     const moveAnim = useRef(new Animated.Value(0)).current;
     const [modalVisible, setModalVisible] = useState(false);
     const [showDailyCompletion, setShowDailyCompletion] = useState(false);
@@ -212,6 +214,7 @@ export default function HomeScreen() {
                     pointUserIdRef.current = userId;
                     pointBalanceRef.current = currentPoints;
                     setLoggedInUser(currentUser);
+                    setUser(currentUser);
 
                     const balanceDifference = previousPoints === null
                         ? 0
@@ -253,7 +256,13 @@ export default function HomeScreen() {
         }, [loadDailyQuestion]),
     );
 
-    const updatePoints = async (amount, totalPoints, optimisticPoints = 0, userId = pointUserIdRef.current) => {
+    const updatePoints = async (
+        amount,
+        totalPoints,
+        optimisticPoints = 0,
+        userId = pointUserIdRef.current,
+        maxPoints
+    ) => {
         const pointsDelta = Number(amount);
         if (!Number.isSafeInteger(pointsDelta)) {
             console.error('Received an invalid points adjustment:', amount);
@@ -264,12 +273,30 @@ export default function HomeScreen() {
         const updatedPoints = Number.isSafeInteger(responseBalance)
             ? responseBalance
             : (Number(pointBalanceRef.current) || 0) + pointsDelta - optimisticPoints;
+        const responseMaxPoints = Number(maxPoints);
+        const updatedMaxPoints = Math.max(
+            Number(loggedInUser?.maxPoints) || 0,
+            Number.isSafeInteger(responseMaxPoints) ? responseMaxPoints : 0,
+            updatedPoints
+        );
         pointRevisionRef.current += 1;
         pointBalanceRef.current = updatedPoints;
         setLoggedInUser((current) => ({
             ...(current || {}),
             totalPoints: updatedPoints,
+            maxPoints: Math.max(Number(current?.maxPoints) || 0, updatedPoints),
         }));
+        setUser((current) => current
+            ? {
+                ...current,
+                totalPoints: updatedPoints,
+                maxPoints: Math.max(
+                    Number(current.maxPoints) || 0,
+                    Number.isSafeInteger(responseMaxPoints) ? responseMaxPoints : 0,
+                    updatedPoints
+                ),
+            }
+            : { totalPoints: updatedPoints, maxPoints: updatedMaxPoints });
         if (userId) {
             try {
                 await cacheKnownPoints(userId, updatedPoints);
@@ -301,6 +328,9 @@ export default function HomeScreen() {
             ...(current || {}),
             totalPoints: updatedPoints,
         }));
+        setUser((current) => current
+            ? { ...current, totalPoints: updatedPoints }
+            : { totalPoints: updatedPoints });
     };
 
     const handleDailyAnswer = async (index) => {
@@ -364,7 +394,8 @@ export default function HomeScreen() {
                 awardedPoints,
                 Number.isFinite(updatedPoints) ? updatedPoints : undefined,
                 0,
-                userId
+                userId,
+                result?.maxPoints
             );
             setShowDailySuccessModal(true);
         } catch (error) {

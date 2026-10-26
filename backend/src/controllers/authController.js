@@ -55,6 +55,7 @@ const authController = {
             username: user.username,
             role: user.role,
             totalPoints: user.totalPoints,
+            maxPoints: user.maxPoints,
             title: user.title,
           },
         },
@@ -115,6 +116,7 @@ const authController = {
             username: user.username,
             role: user.role,
             totalPoints: user.totalPoints,
+            maxPoints: user.maxPoints,
             title: user.title,
           },
         },
@@ -144,7 +146,7 @@ const authController = {
           req.user._id,
           { $set: { hasUnseenPointsUpdate: false, unseenPointsDifference: 0 } },
           { returnDocument: 'before' }
-        ).select('username totalPoints title role createdAt hasUnseenPointsUpdate unseenPointsDifference')
+        ).select('username totalPoints maxPoints title role createdAt hasUnseenPointsUpdate unseenPointsDifference')
 
         if (!user) {
           return res.status(401).json({
@@ -158,6 +160,8 @@ const authController = {
         _id,
         username,
         totalPoints,
+        totalEarnedPoints,
+        maxPoints,
         title,
         role,
         createdAt,
@@ -172,6 +176,7 @@ const authController = {
           id: _id,
           username,
           totalPoints,
+          maxPoints: maxPoints ?? Math.max(totalEarnedPoints ?? 0, totalPoints ?? 0, 0),
           title,
           role,
           createdAt,

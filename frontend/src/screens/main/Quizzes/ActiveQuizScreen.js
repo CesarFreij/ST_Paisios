@@ -12,6 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native'
 import { FontAwesome5 } from '@expo/vector-icons'
 import api from '../../../api/apiClient'
 import { cacheKnownPoints } from '../../../utils/pointBalanceCache'
+import { useUserPoints } from '../../../context/UserPointsContext'
 
 const palette = {
   background: '#f0f8ff',
@@ -32,6 +33,7 @@ const formatTime = (seconds) => {
 }
 
 export default function ActiveQuizScreen() {
+  const { setUser } = useUserPoints()
   const navigation = useNavigation()
   const route = useRoute()
   const {
@@ -64,7 +66,9 @@ export default function ActiveQuizScreen() {
     let active = true
     api.get('/api/auth/me')
       .then((response) => {
-        const userId = response.data?.data?.id ?? response.data?.data?._id
+        const currentUser = response.data?.data
+        const userId = currentUser?.id ?? currentUser?._id
+        if (active && currentUser) setUser(currentUser)
         if (active && userId) userIdRef.current = userId
       })
       .catch((error) => {
@@ -104,6 +108,24 @@ export default function ActiveQuizScreen() {
       }
       const totalPoints = Number(resultData.totalPoints)
       if (Number.isSafeInteger(totalPoints)) {
+        const responseMaxPoints = Number(resultData.maxPoints)
+        setUser((current) => current
+          ? {
+              ...current,
+              totalPoints,
+              maxPoints: Math.max(
+                Number(current.maxPoints) || 0,
+                Number.isSafeInteger(responseMaxPoints) ? responseMaxPoints : 0,
+                totalPoints
+              ),
+            }
+          : {
+              totalPoints,
+              maxPoints: Math.max(
+                Number.isSafeInteger(responseMaxPoints) ? responseMaxPoints : 0,
+                totalPoints
+              ),
+            })
         try {
           if (!userIdRef.current) {
             const userResponse = await api.get('/api/auth/me')
@@ -122,7 +144,7 @@ export default function ActiveQuizScreen() {
       submittingRef.current = false
       setIsSubmitting(false)
     }
-  }, [quiz?.id, result, submissionId])
+  }, [quiz?.id, result, setUser, submissionId])
 
   submitRef.current = submitAttempt
 

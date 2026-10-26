@@ -180,7 +180,13 @@ export default function CustomButton({
             ) {
                 throw new Error('استجابة الخادم لا تحتوي على قيمة نقاط صالحة.');
             }
-            onPointsAwarded?.(awardedPoints, response.data?.data?.totalPoints, optimisticPoints);
+            onPointsAwarded?.(
+                awardedPoints,
+                response.data?.data?.totalPoints,
+                optimisticPoints,
+                undefined,
+                response.data?.data?.maxPoints
+            );
             const newlyUnlocked = response.data?.data?.newlyUnlocked;
             if (Array.isArray(newlyUnlocked) && newlyUnlocked.length > 0) {
                 onAchievementsUnlocked?.(newlyUnlocked);

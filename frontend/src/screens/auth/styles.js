@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
         zIndex: 1
     },
     input: {
-        color: 'rgb(51, 51, 51)',
+        color: '#000000',
         paddingVertical: 16,
         paddingStart: 20,
         paddingEnd: 50,
