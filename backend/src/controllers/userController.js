@@ -6,6 +6,7 @@ const WeeklyQuiz = require('../models/WeeklyQuiz')
 const PointTransaction = require('../models/PointTransaction')
 const PointLog = require('../models/PointLog')
 const { getPagination, paginationMetadata } = require('../utils/pagination')
+const { Expo } = require('expo-server-sdk')
 
 const resolveQuizWindow = (quiz) => {
   if (quiz.windowStart && quiz.windowEnd) {
@@ -371,6 +372,8 @@ const adjustUserPoints = async (req, res) => {
         } else {
           user.totalDeductedPoints += amount
         }
+        user.hasUnseenPointsUpdate = true
+        user.unseenPointsDifference = isPositive ? amount : -amount
         user.pointNotifications.push({
           amount,
           isPositive,
@@ -413,6 +416,25 @@ const adjustUserPoints = async (req, res) => {
   } catch (error) {
     console.error(error)
     return res.status(500).json({ success: false, message: 'Failed to adjust user points.' })
+  }
+}
+
+const saveExpoPushToken = async (req, res) => {
+  try {
+    const { expoPushToken } = req.body || {}
+    if (typeof expoPushToken !== 'string' || !Expo.isExpoPushToken(expoPushToken)) {
+      return res.status(400).json({ success: false, message: 'A valid Expo push token is required.' })
+    }
+
+    await User.updateMany(
+      { expoPushToken, _id: { $ne: req.user._id } },
+      { $unset: { expoPushToken: 1 } }
+    )
+    await User.updateOne({ _id: req.user._id }, { $set: { expoPushToken } })
+    return res.status(200).json({ success: true, message: 'Push token registered.' })
+  } catch (error) {
+    console.error('Failed to save Expo push token:', error)
+    return res.status(500).json({ success: false, message: 'Failed to register push token.' })
   }
 }
 
@@ -512,27 +534,38 @@ const updateUser = async (req, res) => {
     delete updates.totalPoints
     Object.assign(user, updates)
     let pointsLog
+    let pointsDifference = 0
     if (requestedTotalPoints !== undefined) {
       if (!Number.isSafeInteger(requestedTotalPoints)) {
         return res.status(400).json({ success: false, message: 'Total points must be a whole number.' })
       }
-      const difference = requestedTotalPoints - user.totalPoints
-      if (difference > 0) {
-        user.totalEarnedPoints += difference
+      pointsDifference = requestedTotalPoints - user.totalPoints
+      if (pointsDifference > 0) {
+        user.totalEarnedPoints += pointsDifference
         pointsLog = {
           userId: user._id,
-          amount: difference,
+          amount: pointsDifference,
           type: 'admin_gift',
           description: 'تعديل إداري للرصيد',
         }
-      } else if (difference < 0) {
-        user.totalDeductedPoints += Math.abs(difference)
+      } else if (pointsDifference < 0) {
+        user.totalDeductedPoints += Math.abs(pointsDifference)
         pointsLog = {
           userId: user._id,
-          amount: difference,
+          amount: pointsDifference,
           type: 'admin_deduction',
           description: 'تعديل إداري للرصيد',
         }
+      }
+      if (pointsDifference !== 0) {
+        user.hasUnseenPointsUpdate = true
+        user.unseenPointsDifference = pointsDifference
+        user.pointNotifications.push({
+          amount: Math.abs(pointsDifference),
+          isPositive: pointsDifference > 0,
+          isRead: false,
+          createdAt: new Date(),
+        })
       }
     }
     const session = await mongoose.startSession()
@@ -607,6 +640,7 @@ const changeUserRole = async (req, res) => {
 
 module.exports = {
   getSettingsSummary,
+  saveExpoPushToken,
   getRankings,
   getUsers,
   getUser,

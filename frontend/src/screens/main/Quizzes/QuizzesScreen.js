@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { FontAwesome5 } from '@expo/vector-icons'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import api from '../../../api/apiClient'
 
 const colors = {
@@ -126,9 +125,15 @@ export default function QuizzesScreen() {
     setError('')
     try {
       const response = await api.post(`/api/quizzes/${quiz.id}/start`)
+      const data = response.data?.data
+      console.log('Received Remaining Seconds:', data?.remainingSeconds)
+      const hasValidRemainingSeconds = Number.isSafeInteger(data?.remainingSeconds) && data.remainingSeconds >= 0
+      const durationMinutes = Number(data?.durationMinutes ?? data?.quiz?.durationMinutes)
+      if (!hasValidRemainingSeconds && (!Number.isFinite(durationMinutes) || durationMinutes <= 0)) {
+        throw new Error('The quiz start response is missing timer data.')
+      }
       navigation.navigate('ActiveQuiz', {
-        ...response.data.data,
-        serverOffset: new Date(response.data.data.serverNow).getTime() - Date.now(),
+        ...data,
       })
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'تعذر بدء الاختبار.')
@@ -238,14 +243,14 @@ export default function QuizzesScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.centered}><ActivityIndicator size="large" color={colors.blue} /></View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       {error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{error}</Text>
@@ -266,7 +271,7 @@ export default function QuizzesScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadQuizzes(true)} tintColor={colors.blue} />}
       />
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -274,7 +279,7 @@ const styles = {
   safeArea: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: 18, paddingBottom: 28 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 18 },
+  header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingBottom: 18 },
   pageTitle: { color: colors.dark, fontSize: 23, fontWeight: '800', textAlign: 'left' },
   backButton: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, padding: 8 },
   backText: { color: colors.blue, fontSize: 15, fontWeight: '700' },

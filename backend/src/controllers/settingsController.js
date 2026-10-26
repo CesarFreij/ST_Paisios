@@ -1,22 +1,17 @@
 const Settings = require('../models/Settings')
+const { actionPointDefaults, pointSettingFields } = require('../config/pointConfig')
 
 const settingsKey = 'global'
-const pointFields = ['prayerPoints', 'fastingPoints', 'biblePoints', 'churchPoints', 'goodDeedPoints']
-const defaultPointValues = {
-  prayerPoints: 5,
-  fastingPoints: 5,
-  biblePoints: 10,
-  churchPoints: 8,
-  goodDeedPoints: 7,
+const pointFields = Object.values(pointSettingFields)
+const getPointSettings = (settings) => {
+  const pointSettings = Object.fromEntries(
+    Object.entries(pointSettingFields).map(([action, field]) => [
+      field,
+      settings[field] ?? actionPointDefaults[action],
+    ])
+  )
+  return { ...pointSettings, dailyVersePoints: pointSettings.biblePoints }
 }
-const getPointSettings = (settings) => ({
-  prayerPoints: settings.prayerPoints ?? defaultPointValues.prayerPoints,
-  fastingPoints: settings.fastingPoints ?? defaultPointValues.fastingPoints,
-  biblePoints: settings.biblePoints ?? defaultPointValues.biblePoints,
-  dailyVersePoints: settings.biblePoints ?? defaultPointValues.biblePoints,
-  churchPoints: settings.churchPoints ?? defaultPointValues.churchPoints,
-  goodDeedPoints: settings.goodDeedPoints ?? defaultPointValues.goodDeedPoints,
-})
 
 const getSettings = async (req, res) => {
   try {

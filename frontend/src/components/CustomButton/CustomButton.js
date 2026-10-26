@@ -15,20 +15,33 @@ const progressFieldByAction = {
     'الصوم': 'fastingCount',
 };
 
-const actionPointsByCounter = {
-    prayerCount: 'prayer',
-    fastingCount: 'fasting',
-    bibleCount: 'bible',
-    churchCount: 'church',
-    goodDeedCount: 'goodDeed',
-};
-
 const actionLabelsByCounter = {
     prayerCount: 'الصلاة',
     fastingCount: 'الصوم',
     bibleCount: 'الكتاب المقدس',
     churchCount: 'الكنيسة',
     goodDeedCount: 'عمل الرحمة',
+};
+
+const normalizeActionPoints = (configuredPoints) => {
+    if (!configuredPoints) {
+        throw new Error('لم يتم استلام إعدادات النقاط من الخادم.');
+    }
+    const actionPoints = {
+        prayer: configuredPoints.prayerPoints,
+        fasting: configuredPoints.fastingPoints,
+        bible: configuredPoints.dailyVersePoints ?? configuredPoints.biblePoints,
+        church: configuredPoints.churchPoints,
+        goodDeed: configuredPoints.goodDeedPoints,
+    };
+    if (Object.values(actionPoints).some((points) =>
+        !Number.isSafeInteger(Number(points)) || Number(points) < 0
+    )) {
+        throw new Error('إعدادات النقاط المستلمة من الخادم غير صالحة.');
+    }
+    return Object.fromEntries(
+        Object.entries(actionPoints).map(([action, points]) => [action, Number(points)])
+    );
 };
 
 const getSyriaDate = () => new Intl.DateTimeFormat('en-CA', {
@@ -63,7 +76,12 @@ const HamburgerBanButton = ({ onPress, completed, disabled }) => (
     </TouchableOpacity>
 );
 
-export default function CustomButton({ onPointsAwarded, onOptimisticPointsChange, onSnackbar }) {
+export default function CustomButton({
+    onPointsAwarded,
+    onOptimisticPointsChange,
+    onSnackbar,
+    onAchievementsUnlocked,
+}) {
     const [confirmVisible, setConfirmVisible] = useState(false);
     const [selectedTodo, setSelectedTodo] = useState('');
     const [selectedPoints, setSelectedPoints] = useState(0);
@@ -96,18 +114,8 @@ export default function CustomButton({ onPointsAwarded, onOptimisticPointsChange
 
         api.get('/api/settings/points')
             .then((response) => {
-                const configuredPoints = response.data?.data;
-                if (!configuredPoints) {
-                    throw new Error('لم يتم استلام إعدادات النقاط من الخادم.');
-                }
                 if (active) {
-                    setActionPoints({
-                        prayer: configuredPoints.prayerPoints,
-                        fasting: configuredPoints.fastingPoints,
-                        bible: configuredPoints.dailyVersePoints ?? configuredPoints.biblePoints,
-                        church: configuredPoints.churchPoints,
-                        goodDeed: configuredPoints.goodDeedPoints,
-                    });
+                    setActionPoints(normalizeActionPoints(response.data?.data));
                     setPointSettingsLoaded(true);
                 }
             })
@@ -146,7 +154,7 @@ export default function CustomButton({ onPointsAwarded, onOptimisticPointsChange
         }
 
         const counter = selectedCounter;
-        const optimisticPoints = Number(actionPoints[actionPointsByCounter[counter]]) || 0;
+        const optimisticPoints = Number(selectedPoints) || 0;
         requestInFlight.current = true;
         setIsSubmittingAction(true);
         setConfirmVisible(false);
@@ -156,27 +164,59 @@ export default function CustomButton({ onPointsAwarded, onOptimisticPointsChange
         try {
             const response = await api.post('/api/progress/action', {
                 action: counter,
+                expectedPoints: optimisticPoints,
             });
 
             if (!response.data?.success) {
                 throw new Error(response.data?.message || 'فشل حفظ التقدم.');
             }
-            const awardedPoints = Number(response.data?.data?.awardedPoints ?? 0);
+            const baseActionPoints = Number(response.data?.data?.baseActionPoints);
+            const awardedPoints = Number(response.data?.data?.awardedPoints);
+            if (
+                !Number.isSafeInteger(baseActionPoints) ||
+                baseActionPoints !== optimisticPoints ||
+                !Number.isSafeInteger(awardedPoints) ||
+                awardedPoints < baseActionPoints
+            ) {
+                throw new Error('استجابة الخادم لا تحتوي على قيمة نقاط صالحة.');
+            }
             onPointsAwarded?.(awardedPoints, response.data?.data?.totalPoints, optimisticPoints);
+            const newlyUnlocked = response.data?.data?.newlyUnlocked;
+            if (Array.isArray(newlyUnlocked) && newlyUnlocked.length > 0) {
+                onAchievementsUnlocked?.(newlyUnlocked);
+            }
             const perfectMonthAction = response.data?.data?.perfectMonthAction;
             if (response.data?.data?.perfectMonthAchieved === true) {
+                const perfectMonthPoints = Number(response.data?.data?.perfectMonthPoints);
+                const rewardMessage = Number.isSafeInteger(perfectMonthPoints) && perfectMonthPoints > 0
+                    ? ` وحصلت على ${formatArabicPoints(perfectMonthPoints)} إضافية!`
+                    : ' وحصلت على مكافأة إضافية!';
                 onSnackbar?.(
                     'celebration',
-                    `🎉 إنجاز أسطوري! لقد أكملت شهر كامل من ${perfectMonthAction} وحصلت على 1000 نقطة إضافية!`
+                    `🎉 إنجاز أسطوري! لقد أكملت شهر كامل من ${perfectMonthAction}${rewardMessage}`
                 );
-            } else {
+            } else if (!Array.isArray(newlyUnlocked) || newlyUnlocked.length === 0) {
                 onSnackbar?.('success', `تم إضافة ${formatArabicPoints(awardedPoints)} بنجاح!`);
             }
         } catch (error) {
             console.error('Failed to save progress:', error);
             setCompletedActions((current) => ({ ...current, [counter]: false }));
             onOptimisticPointsChange?.(-optimisticPoints);
-            if (error.response?.data?.code === 'ALREADY_COMPLETED_TODAY') {
+            if (error.response?.data?.code === 'POINT_SETTINGS_CHANGED') {
+                setPointSettingsLoaded(false);
+                try {
+                    const settingsResponse = await api.get('/api/settings/points');
+                    setActionPoints(normalizeActionPoints(settingsResponse.data?.data));
+                    setPointSettingsLoaded(true);
+                    onSnackbar?.('warning', 'تم تحديث إعدادات النقاط. أعد المحاولة بالقيمة الجديدة.');
+                } catch (settingsError) {
+                    console.error('Failed to refresh action point settings:', settingsError);
+                    Alert.alert(
+                        'تعذر تحديث إعدادات النقاط',
+                        settingsError.response?.data?.message || 'تحقق من اتصال الشبكة ثم أعد فتح الشاشة.'
+                    );
+                }
+            } else if (error.response?.data?.code === 'ALREADY_COMPLETED_TODAY') {
                 onSnackbar?.('warning', `لا يمكنك الضغط على زر ${actionLabelsByCounter[counter]} أكثر من مرة في اليوم`);
             } else {
                 onSnackbar?.('error', 'لا يوجد اتصال بالإنترنت، يرجى المحاولة لاحقاً.');
@@ -243,7 +283,9 @@ export default function CustomButton({ onPointsAwarded, onOptimisticPointsChange
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>{`هل أنت متأكد من الضغط على زر ${selectedTodo}؟`}</Text>
                         <Text style={styles.modalMessage}>
-                            سيتم إضافة <Text style={styles.modalMessageBold}>{formatArabicPoints(selectedPoints)}</Text> إلى رصيدك!
+                            مكافأة النشاط الأساسية{' '}
+                            <Text style={styles.modalMessageBold}>{formatArabicPoints(selectedPoints)}</Text>
+                            . وقد تُضاف مكافآت إنجازات عند استحقاقها.
                         </Text>
                         <View style={styles.modalActions}>
                             <TouchableOpacity

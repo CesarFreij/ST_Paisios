@@ -137,7 +137,33 @@ const authController = {
         })
       }
 
-      const { _id, username, totalPoints, title, role, createdAt } = req.user
+      let user = req.user
+
+      if (req.query.consumePointUpdate === 'true') {
+        user = await User.findByIdAndUpdate(
+          req.user._id,
+          { $set: { hasUnseenPointsUpdate: false, unseenPointsDifference: 0 } },
+          { new: false }
+        ).select('username totalPoints title role createdAt hasUnseenPointsUpdate unseenPointsDifference')
+
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Unauthorized',
+          })
+        }
+      }
+
+      const {
+        _id,
+        username,
+        totalPoints,
+        title,
+        role,
+        createdAt,
+      } = user
+      const hasUnseenPointsUpdate = Boolean(user.hasUnseenPointsUpdate)
+      const unseenPointsDifference = Number(user.unseenPointsDifference) || 0
 
       return res.status(200).json({
         success: true,
@@ -149,6 +175,8 @@ const authController = {
           title,
           role,
           createdAt,
+          hasUnseenPointsUpdate,
+          unseenPointsDifference,
         },
       })
     } catch (error) {

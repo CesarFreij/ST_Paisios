@@ -9,10 +9,9 @@ import Quiz from './src/screens/main/Quiz/Quiz';
 import QuizResult from './src/screens/main/QuizResult/QuizResult';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar, View } from 'react-native';
 import LoginRegister from './src/screens/auth/LoginRegister';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import OfflineBanner from './src/components/OfflineBanner/OfflineBanner';
 import authService from './src/services/authService';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -64,23 +63,25 @@ export default function App() {
       <View style={{ flex: 1, backgroundColor: '#000' }}>
         <NavigationContainer ref={navigationRef} onReady={navigateToHomeIfReady}>
           <View style={{ flex: 1, backgroundColor: '#000' }}>
-            <StatusBar style="light" />
-            <Stack.Navigator
-              initialRouteName="LoginRegister"
-              screenOptions={{ headerShown: false, animation: 'slide_from_left' }}
-            >
-              <Stack.Screen name="LoginRegister">
-                {(props) => <LoginRegister {...props} isCheckingToken={isCheckingToken} />}
-              </Stack.Screen>
-              <Stack.Screen name="Home" component={HomeScreen} />
-              <Stack.Screen name="Points" component={PointsScreen} />
-              <Stack.Screen name="Rank" component={RankScreen} />
-              <Stack.Screen name="WeeklyExam" component={WeeklyExam} />
-              <Stack.Screen name="ActiveQuiz" component={ActiveQuizScreen} />
-              <Stack.Screen name="Achievements" component={AchievementsScreen} />
-              <Stack.Screen name="Quiz" component={Quiz} />
-              <Stack.Screen name="QuizResult" component={QuizResult} />
-            </Stack.Navigator>
+            <StatusBar backgroundColor="#000000" barStyle="light-content" />
+            <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: '#000000' }}>
+              <Stack.Navigator
+                initialRouteName="LoginRegister"
+                screenOptions={{ headerShown: false, animation: 'slide_from_left' }}
+              >
+                <Stack.Screen name="LoginRegister">
+                  {(props) => <LoginRegister {...props} isCheckingToken={isCheckingToken} />}
+                </Stack.Screen>
+                <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="Points" component={PointsScreen} />
+                <Stack.Screen name="Rank" component={RankScreen} />
+                <Stack.Screen name="WeeklyExam" component={WeeklyExam} />
+                <Stack.Screen name="ActiveQuiz" component={ActiveQuizScreen} />
+                <Stack.Screen name="Achievements" component={AchievementsScreen} />
+                <Stack.Screen name="Quiz" component={Quiz} />
+                <Stack.Screen name="QuizResult" component={QuizResult} />
+              </Stack.Navigator>
+            </SafeAreaView>
           </View>
         </NavigationContainer>
         <OfflineBanner />

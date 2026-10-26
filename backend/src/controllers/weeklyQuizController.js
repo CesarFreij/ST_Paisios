@@ -197,10 +197,14 @@ const startQuiz = async (req, res) => {
       answers: [],
     })
     const startedAt = submission.startedAt || now
-    const expiresAt = new Date(Math.min(
-      startedAt.getTime() + (quiz.durationMinutes ?? 10) * 60 * 1000,
-      windowEnd.getTime()
-    ))
+    const expiresAt = new Date(
+      startedAt.getTime() + (quiz.durationMinutes ?? 10) * 60 * 1000
+    )
+    const remainingSeconds = Math.max(
+      0,
+      Math.floor((expiresAt.getTime() - Date.now()) / 1000)
+    )
+    console.log('Calculated expiresAt:', expiresAt)
 
     return res.status(200).json({
       success: true,
@@ -209,6 +213,8 @@ const startQuiz = async (req, res) => {
         startedAt,
         serverNow: now,
         expiresAt,
+        remainingSeconds,
+        durationMinutes: quiz.durationMinutes ?? 10,
         quiz: {
           ...publicQuizSummary(quiz.toObject()),
           questions: quiz.questions.map((question) => ({
@@ -269,11 +275,9 @@ const submitQuiz = async (req, res) => {
       }
 
       const now = new Date()
-      const { windowEnd } = resolveWindow(quiz)
-      const expiresAt = new Date(Math.min(
-        submission.startedAt.getTime() + (quiz.durationMinutes ?? 10) * 60 * 1000,
-        windowEnd.getTime()
-      ))
+      const expiresAt = new Date(
+        submission.startedAt.getTime() + (quiz.durationMinutes ?? 10) * 60 * 1000
+      )
       const status = now >= expiresAt ? 'timed_out' : 'completed'
       const details = quiz.questions.map((question, index) => {
         const selectedOptionIndex = answers[index] ?? -1

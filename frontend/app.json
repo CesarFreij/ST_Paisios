@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ST Paisios",
-    "slug": "ST Paisios",
+    "slug": "st-paisios",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "package": "com.cesarfreij.stpaisios"
     },
     "web": {
@@ -32,11 +32,11 @@
       "expo-status-bar",
       "expo-splash-screen"
     ],
+    "owner": "cesarfreij",
     "extra": {
       "eas": {
-        "projectId": "b1eac14a-9083-4923-9921-381467900ce4"
+        "projectId": "ab217d90-d381-40ee-8463-5534b1511130"
       }
-    },
-    "owner": "cesarfreij"
+    }
   }
 }

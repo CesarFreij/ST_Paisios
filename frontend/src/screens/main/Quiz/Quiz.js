@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './styles';
 
 const defaultQuestions = [
@@ -65,7 +64,7 @@ export default function Quiz() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="chevron-right" size={20} color="#348cb2" />
@@ -114,6 +113,6 @@ export default function Quiz() {
           <Text style={styles.navButtonText}>{isLastQuestion ? 'إنهاء الاختبار' : 'التالي'}</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

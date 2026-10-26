@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import api from '../../../api/apiClient';
@@ -119,7 +118,7 @@ export default function RankScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <View style={styles.safeArea}>
             <View style={styles.header}>
                 <Text style={styles.title}>ترتيبي</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -179,6 +178,6 @@ export default function RankScreen() {
                     ListEmptyComponent={<Text style={styles.emptyText}>لا يوجد مستخدمون في قائمة الترتيب حتى الآن.</Text>}
                 />
             )}
-        </SafeAreaView>
+        </View>
     );
 }

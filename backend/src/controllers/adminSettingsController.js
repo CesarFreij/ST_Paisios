@@ -1,8 +1,9 @@
 const AdminSettings = require('../models/AdminSettings')
 const User = require('../models/User')
+const { actionPointDefaults } = require('../config/pointConfig')
 
 const settingsKey = 'global'
-const pointActions = ['prayer', 'fasting', 'bible', 'church', 'goodDeed']
+const pointActions = Object.keys(actionPointDefaults)
 
 const getOrCreateSettings = () => AdminSettings.findOneAndUpdate(
   { key: settingsKey },

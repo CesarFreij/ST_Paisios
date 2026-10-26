@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../../api/apiClient';
 import styles from './styles';
 
@@ -56,7 +55,7 @@ export default function QuizResult() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={returnToHome}>
           <FontAwesome5 name="chevron-right" size={20} color="#348cb2" />
@@ -94,6 +93,6 @@ export default function QuizResult() {
       <TouchableOpacity style={styles.homeButton} onPress={returnToHome} activeOpacity={0.8}>
         <Text style={styles.homeButtonText}>العودة إلى الرئيسية</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }

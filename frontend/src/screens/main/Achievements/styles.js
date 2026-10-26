@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 10,
     backgroundColor: '#f0f8ff',
   },
@@ -192,28 +192,29 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingVertical: 3,
   },
-  pathRail: {
+  milestoneItem: {
+    position: 'relative',
+    minHeight: 56,
+  },
+  milestoneConnector: {
     position: 'absolute',
-    top: 16,
-    bottom: 16,
+    top: 28,
     right: 14,
     width: 4,
+    height: 56,
     borderRadius: 3,
     backgroundColor: '#d9dfe6',
   },
-  pathFill: {
-    position: 'absolute',
-    top: 16,
-    right: 14,
-    width: 4,
+  milestoneConnectorFill: {
+    width: '100%',
     borderRadius: 3,
     backgroundColor: '#2e7d32',
-    zIndex: 1,
   },
   milestoneRow: {
     minHeight: 56,
     flexDirection: 'row-reverse',
     alignItems: 'center',
+    zIndex: 1,
   },
   milestoneDot: {
     zIndex: 2,

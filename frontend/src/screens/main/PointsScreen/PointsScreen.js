@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Easing, View, Text, TouchableOpacity, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import api from '../../../api/apiClient';
@@ -76,6 +75,7 @@ export default function PointsScreen() {
     const [totalDeductedPoints, setTotalDeductedPoints] = useState(0);
     const [quizPoints, setQuizPoints] = useState(0);
     const [extraPoints, setExtraPoints] = useState(0);
+    const [perfectMonthRewardPoints, setPerfectMonthRewardPoints] = useState(0);
     const [userLoading, setUserLoading] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -156,7 +156,7 @@ export default function PointsScreen() {
                     const pointFields = { prayer: 'prayer', fasting: 'fasting', bible: 'bible', church: 'church', good: 'goodDeed' };
                     const pointsByActivity = payload.pointsByActivity ?? {};
                     const canonicalTotalPoints = Number(
-                        payload.totalPoints ?? user.totalPoints ?? progress.totalPoints ?? userData.points ?? 0
+                        payload.totalPoints ?? user.totalPoints ?? progress.totalPoints ?? userData?.points ?? 0
                     );
                     const canonicalExtraPoints = Number(payload.extraPoints ?? user.extraPoints ?? 0);
                     const canonicalQuizPoints = Number(payload.quizPoints ?? user.quizPoints ?? 0);
@@ -166,6 +166,15 @@ export default function PointsScreen() {
                     const canonicalDeductedPoints = Number(
                         payload.totalDeductedPoints ?? user.totalDeductedPoints ?? 0
                     );
+                    const perfectMonthRewardValue = payload.perfectMonthRewardPoints
+                        ?? payload.perfectMonthPoints
+                        ?? payload.perfect_month_points
+                        ?? 0;
+                    const parsedPerfectMonthRewardPoints = Number(perfectMonthRewardValue);
+                    const canonicalPerfectMonthRewardPoints =
+                        Number.isSafeInteger(parsedPerfectMonthRewardPoints) && parsedPerfectMonthRewardPoints >= 0
+                            ? parsedPerfectMonthRewardPoints
+                            : 0;
 
                     if (!isActive) return;
 
@@ -179,6 +188,7 @@ export default function PointsScreen() {
                     setTotalDeductedPoints(Number.isFinite(canonicalDeductedPoints) ? canonicalDeductedPoints : 0);
                     setQuizPoints(Number.isFinite(canonicalQuizPoints) ? canonicalQuizPoints : 0);
                     setExtraPoints(Number.isFinite(canonicalExtraPoints) ? canonicalExtraPoints : 0);
+                    setPerfectMonthRewardPoints(canonicalPerfectMonthRewardPoints);
                     const currentMonth = /^\d{4}-\d{2}$/.test(calendarData.currentMonthYear)
                         ? calendarData.currentMonthYear
                         : getCurrentMonthYear();
@@ -189,7 +199,7 @@ export default function PointsScreen() {
                         name: user.username || user.name || progress.name || progress.username || current.name,
                         rank: typeof progress.rank === 'string' ? progress.rank : typeof user.rank === 'string' ? user.rank : current.rank,
                         streak: normalizeCount(progress.streak ?? user.streak),
-                        points: Number.isFinite(canonicalTotalPoints) ? canonicalTotalPoints : current.points,
+                        points: Number.isFinite(canonicalTotalPoints) ? canonicalTotalPoints : current?.points ?? 0,
                     }));
                 } catch (error) {
                     if (isActive) console.error('Failed to fetch progress:', error);
@@ -252,7 +262,7 @@ export default function PointsScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <View style={styles.safeArea}>
             {isLoading ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color="#348cb2" />
@@ -277,16 +287,16 @@ export default function PointsScreen() {
                             </View>
                             <View style={styles.summaryRow}>
                                 <View style={styles.summaryItem}>
-                                    <Text style={styles.summaryLabel}>⭐ النقاط الكلية</Text>
-                                    <Text style={styles.summaryValue}>{formatArabicPoints(totalPoints)}</Text>
+                                    <Text style={styles.summaryLabel}>النقاط الكلية</Text>
+                                    <Text style={styles.summaryValue} adjustsFontSizeToFit>{totalPoints}</Text>
                                 </View>
                                 <View style={styles.summaryItem}>
                                     <Text style={styles.summaryLabel}>النقاط المكتسبة</Text>
-                                    <Text style={styles.summaryValue}>{formatArabicPoints(totalEarnedPoints)}</Text>
+                                    <Text style={styles.summaryValue} adjustsFontSizeToFit>{totalEarnedPoints}</Text>
                                 </View>
                                 <View style={styles.summaryItem}>
                                     <Text style={styles.summaryLabel}>النقاط المخصومة</Text>
-                                    <Text style={styles.summaryValue}>{formatArabicPoints(totalDeductedPoints)}</Text>
+                                    <Text style={styles.summaryValue} adjustsFontSizeToFit>{totalDeductedPoints}</Text>
                                 </View>
                             </View>
                         </Animated.View>
@@ -297,7 +307,7 @@ export default function PointsScreen() {
                                 <View key={item.id} style={styles.detailItem}>
                                     <View style={styles.detailHeader}>
                                         <Text style={styles.detailTitle}>{item.title}</Text>
-                                        <Text style={styles.detailPoints}>{formatArabicPoints(item.points)}</Text>
+                                        <Text style={styles.detailPoints}>{formatArabicPoints(item?.points ?? 0)}</Text>
                                     </View>
                                     <View style={styles.detailMeta}>
                                         <Text style={styles.detailMetaText}>عدد المرات: {item.count} مرة</Text>
@@ -346,7 +356,7 @@ export default function PointsScreen() {
                             <Text style={styles.sectionTitle}>رزنامة الالتزام</Text>
                             <View style={styles.perfectMonthBanner}>
                                 <Text style={styles.perfectMonthBannerText}>
-                                    🔥 تحدي الشهر: أكمل رزنامة الصلاة أو الكتاب المقدس بنسبة 100% هذا الشهر لتحصد 1000 نقطة إضافية لكل إنجاز!
+                                    🔥 تحدي الشهر: أكمل رزنامة الصلاة أو الكتاب المقدس بنسبة 100% هذا الشهر لتحصد {formatArabicPoints(perfectMonthRewardPoints)} إضافية لكل إنجاز!
                                 </Text>
                             </View>
                             <View style={styles.calendarGrid}>
@@ -448,6 +458,6 @@ export default function PointsScreen() {
                     </Animated.ScrollView>
                 </>
             )}
-        </SafeAreaView>
+        </View>
     );
 }

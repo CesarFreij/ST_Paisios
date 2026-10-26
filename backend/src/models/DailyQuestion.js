@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { dailyQuestionDefaultPoints } = require('../config/pointConfig')
 
 const dailyQuestionSchema = new mongoose.Schema(
   {
@@ -32,8 +33,12 @@ const dailyQuestionSchema = new mongoose.Schema(
     },
     points: {
       type: Number,
-      default: 1,
+      default: dailyQuestionDefaultPoints,
       min: 0,
+      validate: {
+        validator: Number.isSafeInteger,
+        message: 'Daily question points must be a whole number.',
+      },
     },
     date: {
       type: Date,

@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingTop: 8,
         paddingBottom: 10,
     },
     backButton: {
@@ -68,18 +68,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(255,255,255,0.13)',
         borderRadius: 20,
-        padding: 14,
+        padding: 10,
         marginStart: 10,
     },
     summaryLabel: {
         color: '#dbe8ff',
-        fontSize: 13,
+        fontSize: 16,
         marginBottom: 6,
+        textAlign: 'center',
     },
     summaryValue: {
         color: '#ffffff',
         fontSize: 20,
         fontWeight: '800',
+        textAlign: 'center'
     },
     sectionCard: {
         backgroundColor: '#ffffff',
@@ -173,7 +175,7 @@ const styles = StyleSheet.create({
         color: '#76520b',
         fontSize: 14,
         fontWeight: '700',
-        textAlign: 'right',
+        textAlign: 'left',
         writingDirection: 'rtl',
         lineHeight: 22,
     },

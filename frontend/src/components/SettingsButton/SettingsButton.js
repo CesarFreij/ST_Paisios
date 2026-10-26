@@ -15,11 +15,16 @@ export default function ModalScreen() {
     const loadSettingsSummary = useCallback(async () => {
         setSummaryLoading(true);
         try {
-            const response = await api.get('/api/user/settings-summary');
+            const [response, userResponse] = await Promise.all([
+                api.get('/api/user/settings-summary'),
+                api.get('/api/auth/me'),
+            ]);
             const data = response.data?.data;
+            const currentUser = userResponse.data?.data;
             if (
                 !data ||
-                !Number.isFinite(Number(data.totalPoints)) ||
+                !currentUser ||
+                !Number.isFinite(Number(currentUser.totalPoints)) ||
                 !Number.isFinite(Number(data.currentRank)) ||
                 typeof data.currentTitle !== 'string' ||
                 typeof data.quizStatus !== 'string'
@@ -27,7 +32,7 @@ export default function ModalScreen() {
                 throw new Error('Invalid settings summary response.');
             }
             setSummary({
-                totalPoints: Number(data.totalPoints),
+                totalPoints: Number(currentUser.totalPoints),
                 currentRank: Number(data.currentRank),
                 currentTitle: data.currentTitle,
                 quizStatus: data.quizStatus,

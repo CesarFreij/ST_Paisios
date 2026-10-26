@@ -21,12 +21,14 @@ const register = async (username, password, confirmPassword) => {
   return res.data
 }
 
-const getCurrentUser = async () => {
+const getCurrentUser = async ({ consumePointUpdate = false } = {}) => {
   const token = await AsyncStorage.getItem(TOKEN_KEY)
   if (!token) return null
 
   try {
-    const res = await api.get('/api/auth/me')
+    const res = await api.get('/api/auth/me', {
+      params: consumePointUpdate ? { consumePointUpdate: 'true' } : undefined,
+    })
     if (res.data && res.data.success) {
       return res.data.data
     }

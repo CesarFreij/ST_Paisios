@@ -10,8 +10,8 @@ import {
 } from 'react-native'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { FontAwesome5 } from '@expo/vector-icons'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import api from '../../../api/apiClient'
+import { cacheKnownPoints } from '../../../utils/pointBalanceCache'
 
 const palette = {
   background: '#f0f8ff',
@@ -34,10 +34,24 @@ const formatTime = (seconds) => {
 export default function ActiveQuizScreen() {
   const navigation = useNavigation()
   const route = useRoute()
-  const { quiz, submissionId, expiresAt, serverNow, serverOffset: receivedOffset = 0 } = route.params || {}
+  const {
+    quiz,
+    submissionId,
+    remainingSeconds: serverRemainingSeconds,
+    durationMinutes: receivedDurationMinutes,
+  } = route.params || {}
   const questions = quiz?.questions ?? []
+  const durationMinutes = Number(receivedDurationMinutes ?? quiz?.durationMinutes)
+  const getInitialSeconds = () => {
+    if (Number.isSafeInteger(serverRemainingSeconds) && serverRemainingSeconds >= 0) {
+      return serverRemainingSeconds
+    }
+    return Number.isFinite(durationMinutes) && durationMinutes > 0
+      ? Math.floor(durationMinutes * 60)
+      : 0
+  }
   const [answers, setAnswers] = useState(() => Array(questions.length).fill(null))
-  const [secondsRemaining, setSecondsRemaining] = useState(0)
+  const [secondsRemaining, setSecondsRemaining] = useState(getInitialSeconds)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [submitError, setSubmitError] = useState('')
@@ -45,9 +59,21 @@ export default function ActiveQuizScreen() {
   const submittingRef = useRef(false)
   const timedOutRef = useRef(false)
   const submitRef = useRef(null)
-  const offset = Number.isFinite(receivedOffset)
-    ? receivedOffset
-    : new Date(serverNow).getTime() - Date.now()
+  const userIdRef = useRef(null)
+  useEffect(() => {
+    let active = true
+    api.get('/api/auth/me')
+      .then((response) => {
+        const userId = response.data?.data?.id ?? response.data?.data?._id
+        if (active && userId) userIdRef.current = userId
+      })
+      .catch((error) => {
+        console.error('Failed to load the current user for weekly quiz points caching:', error)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const returnToExams = useCallback(() => {
     navigation.reset({
@@ -68,7 +94,29 @@ export default function ActiveQuizScreen() {
         answers: answersRef.current,
         status: timedOut ? 'timed_out' : 'completed',
       })
-      setResult(response.data?.data?.submission ?? null)
+      const resultData = response.data?.data
+      if (!resultData || typeof resultData !== 'object') {
+        throw new Error('The quiz submission response did not include result data.')
+      }
+      const submission = resultData?.submission ?? null
+      if (!submission) {
+        throw new Error('The quiz submission response did not include a result.')
+      }
+      const totalPoints = Number(resultData.totalPoints)
+      if (Number.isSafeInteger(totalPoints)) {
+        try {
+          if (!userIdRef.current) {
+            const userResponse = await api.get('/api/auth/me')
+            userIdRef.current = userResponse.data?.data?.id ?? userResponse.data?.data?._id
+          }
+          await cacheKnownPoints(userIdRef.current, totalPoints)
+        } catch (cacheError) {
+          console.error('Failed to cache the points balance after weekly quiz submission:', cacheError)
+        }
+      } else {
+        console.error('Weekly quiz submission response contained an invalid points balance:', resultData.totalPoints)
+      }
+      setResult(submission)
     } catch (requestError) {
       setSubmitError(requestError.response?.data?.message || 'تعذر إرسال إجاباتك. تحقق من اتصالك ثم أعد المحاولة.')
       submittingRef.current = false
@@ -88,20 +136,22 @@ export default function ActiveQuizScreen() {
   }, [isSubmitting, navigation])
 
   useEffect(() => {
-    if (!expiresAt) return undefined
-    const expiry = new Date(expiresAt).getTime()
-    const updateTimer = () => {
-      const remaining = Math.max(0, Math.ceil((expiry - (Date.now() + offset)) / 1000))
-      setSecondsRemaining(remaining)
-      if (remaining <= 0 && !result) {
-        timedOutRef.current = true
-        submitRef.current?.(true)
-      }
-    }
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
+    setSecondsRemaining(getInitialSeconds())
+  }, [serverRemainingSeconds, receivedDurationMinutes, quiz?.durationMinutes])
+
+  useEffect(() => {
+    if (result || isSubmitting) return undefined
+    const interval = setInterval(() => {
+      setSecondsRemaining((remaining) => Math.max(0, remaining - 1))
+    }, 1000)
     return () => clearInterval(interval)
-  }, [expiresAt, offset, result])
+  }, [isSubmitting, result])
+
+  useEffect(() => {
+    if (secondsRemaining > 0 || result || isSubmitting || timedOutRef.current) return
+    timedOutRef.current = true
+    submitRef.current?.(true)
+  }, [isSubmitting, result, secondsRemaining])
 
   const chooseAnswer = (questionIndex, optionIndex) => {
     if (isSubmitting || timedOutRef.current || result) return
@@ -113,14 +163,14 @@ export default function ActiveQuizScreen() {
 
   if (!quiz || !submissionId || questions.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.errorText}>بيانات الاختبار غير مكتملة.</Text>
           <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.replace('WeeklyExam')}>
             <Text style={styles.primaryButtonText}>العودة إلى الاختبارات</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
@@ -129,7 +179,7 @@ export default function ActiveQuizScreen() {
   const passed = maxScore > 0 && (score / maxScore) * 100 >= 80
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.stickyHeader}>
         <TouchableOpacity
           onPress={() => navigation.replace('WeeklyExam')}
@@ -155,7 +205,7 @@ export default function ActiveQuizScreen() {
           <View key={`${questionIndex}-${question.questionText}`} style={styles.questionCard}>
             <View style={styles.questionMeta}>
               <Text style={styles.questionNumber}>السؤال {questionIndex + 1} من {questions.length}</Text>
-              <Text style={styles.points}>{Number(question.points ?? 1).toLocaleString('en-US')} نقاط</Text>
+              <Text style={styles.points}>{Number(question?.points ?? 1).toLocaleString('en-US')} نقاط</Text>
             </View>
             <Text style={styles.questionText}>{question.questionText}</Text>
             {question.options.map((option, optionIndex) => {
@@ -229,7 +279,7 @@ export default function ActiveQuizScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   )
 }
 

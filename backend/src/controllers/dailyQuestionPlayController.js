@@ -3,6 +3,7 @@ const DailyQuestion = require('../models/DailyQuestion')
 const DailyQuestionSubmission = require('../models/DailyQuestionSubmission')
 const User = require('../models/User')
 const PointLog = require('../models/PointLog')
+const { dailyQuestionDefaultPoints } = require('../config/pointConfig')
 
 const DAILY_QUESTION_TIME_ZONE = 'Asia/Damascus'
 
@@ -45,7 +46,7 @@ const getTodayDailyQuestion = async (req, res) => {
 
   const localDate = getCurrentLocalDate()
   try {
-    const question = await findQuestionForDate(null, localDate).select('question options')
+    const question = await findQuestionForDate(null, localDate).select('question options points')
     if (!question) {
       return res.status(200).json({
         has_answered_today: false,
@@ -82,7 +83,7 @@ const getTodayDailyQuestion = async (req, res) => {
             id: question._id,
             question: question.question,
             options: question.options,
-            points: 1,
+            points: question.points ?? dailyQuestionDefaultPoints,
           },
       localDate,
     })
@@ -93,12 +94,13 @@ const getTodayDailyQuestion = async (req, res) => {
 }
 
 const submitDailyQuestion = async (req, res) => {
-  const { questionId, selectedOption } = req.body || {}
+  const { questionId, selectedOption, expectedPoints } = req.body || {}
   const localDate = getCurrentLocalDate()
   if (
     !mongoose.isValidObjectId(questionId) ||
     !Number.isInteger(selectedOption) ||
-    selectedOption < 0
+    selectedOption < 0 ||
+    (expectedPoints !== undefined && (!Number.isSafeInteger(expectedPoints) || expectedPoints < 0))
   ) {
     return res.status(400).json({
       success: false,
@@ -115,12 +117,24 @@ const submitDailyQuestion = async (req, res) => {
         message: 'The daily question for this local date was not found.',
       })
     }
+    if (
+      expectedPoints !== undefined &&
+      expectedPoints !== (question.points ?? dailyQuestionDefaultPoints)
+    ) {
+      return res.status(409).json({
+        success: false,
+        code: 'POINT_SETTINGS_CHANGED',
+        message: 'تم تحديث مكافأة السؤال. أعد المحاولة بالقيمة الجديدة.',
+      })
+    }
     if (selectedOption >= question.options.length) {
       return res.status(400).json({ success: false, message: 'The selected option is invalid.' })
     }
 
     const isCorrect = selectedOption === question.correctOptionIndex
-    const awardedPoints = isCorrect ? 1 : 0
+    const awardedPoints = isCorrect
+      ? question.points ?? dailyQuestionDefaultPoints
+      : 0
     let user
     let submittedAt
     await session.withTransaction(async () => {

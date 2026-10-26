@@ -5,12 +5,13 @@ import styles from './styles';
 import CustomButton from '../../../components/CustomButton/CustomButton';
 import SettingsButton from '../../../components/SettingsButton/SettingsButton';
 import VerseComponent from '../../../components/VerseComponent/VerseComponent';
-import authService from '../../../services/authService';
+import PointNotificationModal from '../../../components/PointNotificationModal/PointNotificationModal';
+import AchievementUnlockedModal from '../../../components/AchievementUnlockedModal/AchievementUnlockedModal';
 import api from '../../../api/apiClient';
 import { formatArabicPoints } from '../../../utils/formatArabicPoints';
+import { cacheKnownPoints, getKnownPointsCacheKey } from '../../../utils/pointBalanceCache';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CONFETTI_COLORS = ['#f6c453', '#e85d75', '#53b6a8', '#7c6ee6', '#f08b3e'];
 const getCurrentLocalDate = () => {
     const dateParts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Asia/Damascus',
@@ -31,13 +32,6 @@ const saveDailyAnsweredDate = async (userId, localDate) => {
         console.error('Failed to cache the daily-question answer date:', error);
     }
 };
-const CONFETTI_PARTICLES = Array.from({ length: 24 }, (_, index) => ({
-    left: `${(index * 37) % 100}%`,
-    color: CONFETTI_COLORS[index % CONFETTI_COLORS.length],
-    width: 7 + (index % 4),
-    rotation: `${(index % 2 ? 1 : -1) * (180 + index * 11)}deg`,
-}));
-
 export default function HomeScreen() {
     const moveAnim = useRef(new Animated.Value(0)).current;
     const [modalVisible, setModalVisible] = useState(false);
@@ -50,11 +44,15 @@ export default function HomeScreen() {
     const [dailyAwardedPoints, setDailyAwardedPoints] = useState(0);
     const [dailySubmitting, setDailySubmitting] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState(null);
-    const [pointNotifications, setPointNotifications] = useState([]);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [pointNotificationAmount, setPointNotificationAmount] = useState(0);
+    const [unlockedAchievements, setUnlockedAchievements] = useState([]);
     const [snackbar, setSnackbar] = useState(null);
     const snackbarAnim = useRef(new Animated.Value(0)).current;
-    const confettiAnimations = useRef(CONFETTI_PARTICLES.map(() => new Animated.Value(0))).current;
-    const activePointNotification = pointNotifications[0] || null;
+    const pointBalanceRef = useRef(null);
+    const pointUserIdRef = useRef(null);
+    const pointRevisionRef = useRef(0);
+    const localPointsSubmissionRef = useRef(false);
 
     useEffect(() => {
         if (!snackbar) return undefined;
@@ -128,6 +126,12 @@ export default function HomeScreen() {
             const question = data?.question
                 ? { ...data.question, localDate: data.localDate }
                 : null;
+            if (
+                question &&
+                (!Number.isSafeInteger(Number(question?.points)) || Number(question?.points) < 0)
+            ) {
+                throw new Error('The daily question response has an invalid points value.');
+            }
             setDailyQuestion(question);
             setDailyAnswered(hasAnsweredToday);
             setDailyResult(null);
@@ -140,72 +144,144 @@ export default function HomeScreen() {
         }
     }, []);
 
-    const loadPointNotifications = async () => {
-        try {
-            const response = await api.get('/api/progress');
-            const notifications = response.data?.data?.pointNotifications;
-            setPointNotifications(Array.isArray(notifications) ? notifications : []);
-        } catch (error) {
-            console.error('Failed to fetch unread point notifications:', error);
-        }
-    };
-
-    const closePointNotification = async () => {
-        if (!activePointNotification?._id) return;
-        try {
-            await api.put('/api/users/notifications/mark-read', {
-                notificationIds: [activePointNotification._id],
-            });
-            setPointNotifications((current) => current.slice(1));
-        } catch (error) {
-            console.error('Failed to mark point notification as read:', error);
-            Alert.alert('تعذر تحديث الإشعار', 'تحقق من اتصالك بالإنترنت ثم حاول إغلاق الإشعار مجددًا.');
-        }
-    };
-
-    useEffect(() => {
-        if (!activePointNotification?.isPositive) return undefined;
-        confettiAnimations.forEach((animation) => animation.setValue(0));
-        const animation = Animated.stagger(
-            45,
-            confettiAnimations.map((value) =>
-                Animated.timing(value, { toValue: 1, duration: 1400, useNativeDriver: true })
-            )
-        );
-        animation.start();
-        return () => animation.stop();
-    }, [activePointNotification?._id, activePointNotification?.isPositive, confettiAnimations]);
-
     useFocusEffect(
         useCallback(() => {
             let active = true;
+            let requestInFlight = false;
+            let intervalId = null;
 
-            const loadUser = async () => {
+            const refreshUser = async (consumePointUpdate) => {
+                if (!active || requestInFlight) return null;
+                requestInFlight = true;
+                const pointRevision = pointRevisionRef.current;
                 try {
-                    const currentUser = await authService.getCurrentUser();
-                    if (active && currentUser) {
-                        setLoggedInUser(currentUser);
-                        await loadDailyQuestion(currentUser.id ?? currentUser._id);
+                    const response = await api.get('/api/auth/me', {
+                        params: consumePointUpdate ? { consumePointUpdate: 'true' } : undefined,
+                    });
+                    const currentUser = response.data?.data;
+                    if (!active || !currentUser) return null;
+
+                    const currentPoints = Number(currentUser.totalPoints);
+                    if (!Number.isFinite(currentPoints)) {
+                        console.error('Received invalid total points for the current user:', currentUser.totalPoints);
+                        return null;
                     }
+
+                    const userId = String(currentUser.id ?? currentUser._id ?? '');
+                    let previousPoints = null;
+                    try {
+                        const cachedPoints = await AsyncStorage.getItem(getKnownPointsCacheKey(userId));
+                        if (cachedPoints !== null) {
+                            const parsedPoints = Number(cachedPoints);
+                            if (Number.isFinite(parsedPoints)) {
+                                previousPoints = parsedPoints;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to read the saved points balance:', error);
+                        if (pointUserIdRef.current === userId) {
+                            previousPoints = pointBalanceRef.current;
+                        }
+                    }
+
+                    if (
+                        !active ||
+                        localPointsSubmissionRef.current ||
+                        pointRevision !== pointRevisionRef.current
+                    ) return null;
+                    try {
+                        await cacheKnownPoints(userId, currentPoints);
+                    } catch (error) {
+                        console.error('Failed to save the latest points balance:', error);
+                    }
+
+                    if (
+                        !active ||
+                        localPointsSubmissionRef.current ||
+                        pointRevision !== pointRevisionRef.current
+                    ) {
+                        if (pointUserIdRef.current === userId && Number.isFinite(pointBalanceRef.current)) {
+                            try {
+                                await cacheKnownPoints(userId, pointBalanceRef.current);
+                            } catch (error) {
+                                console.error('Failed to restore the latest points balance:', error);
+                            }
+                        }
+                        return null;
+                    }
+
+                    pointUserIdRef.current = userId;
+                    pointBalanceRef.current = currentPoints;
+                    setLoggedInUser(currentUser);
+
+                    const balanceDifference = previousPoints === null
+                        ? 0
+                        : currentPoints - previousPoints;
+                    const unseenDifference = Number(currentUser.unseenPointsDifference);
+                    const notificationDifference = currentUser.hasUnseenPointsUpdate
+                        && Number.isFinite(unseenDifference)
+                        && unseenDifference !== 0
+                        ? unseenDifference
+                        : balanceDifference;
+
+                    if (notificationDifference !== 0) {
+                        setPointNotificationAmount(notificationDifference);
+                        setIsModalVisible(true);
+                    }
+
+                    return currentUser;
                 } catch (error) {
-                    console.error('Failed to load signed-in user:', error);
+                    console.error('Failed to refresh current user points:', error.response?.data || error);
+                    return null;
+                } finally {
+                    requestInFlight = false;
                 }
             };
 
-            loadUser();
+            const loadHomeData = async () => {
+                const currentUser = await refreshUser(true);
+                const userId = currentUser?.id ?? currentUser?._id;
+                if (active && userId) {
+                    await loadDailyQuestion(userId);
+                }
+            };
+
+            loadHomeData();
+            intervalId = setInterval(() => {
+                refreshUser(true);
+            }, 1000);
+
             return () => {
                 active = false;
+                if (intervalId) clearInterval(intervalId);
             };
         }, [loadDailyQuestion]),
     );
 
-    const handlePointsAwarded = (awardedPoints, totalPoints, optimisticPoints = 0) => {
+    const updatePoints = async (amount, totalPoints, optimisticPoints = 0, userId = pointUserIdRef.current) => {
+        const pointsDelta = Number(amount);
+        if (!Number.isSafeInteger(pointsDelta)) {
+            console.error('Received an invalid points adjustment:', amount);
+            return;
+        }
+
+        const responseBalance = Number(totalPoints);
+        const updatedPoints = Number.isSafeInteger(responseBalance)
+            ? responseBalance
+            : (Number(pointBalanceRef.current) || 0) + pointsDelta - optimisticPoints;
+        pointRevisionRef.current += 1;
+        pointBalanceRef.current = updatedPoints;
         setLoggedInUser((current) => ({
             ...(current || {}),
-            totalPoints: Number.isFinite(totalPoints)
-                ? totalPoints
-                : (Number(current?.totalPoints) || 0) + awardedPoints - optimisticPoints,
+            totalPoints: updatedPoints,
         }));
+        if (userId) {
+            try {
+                await cacheKnownPoints(userId, updatedPoints);
+            } catch (error) {
+                console.error('Failed to cache the updated points balance:', error);
+            }
+        }
     };
 
     useEffect(() => {
@@ -223,9 +299,12 @@ export default function HomeScreen() {
     }, []);
 
     const handleOptimisticPointsChange = (pointsDelta) => {
+        const updatedPoints = (Number(pointBalanceRef.current) || 0) + pointsDelta;
+        pointRevisionRef.current += 1;
+        pointBalanceRef.current = updatedPoints;
         setLoggedInUser((current) => ({
             ...(current || {}),
-            totalPoints: (Number(current?.totalPoints) || 0) + pointsDelta,
+            totalPoints: updatedPoints,
         }));
     };
 
@@ -239,6 +318,7 @@ export default function HomeScreen() {
             questionId,
             selectedOption,
             localDate,
+            expectedPoints: Number(dailyQuestion?.points),
             ...(userId ? { user_id: String(userId) } : {}),
         };
 
@@ -251,6 +331,8 @@ export default function HomeScreen() {
             return;
         }
 
+        localPointsSubmissionRef.current = true;
+        pointRevisionRef.current += 1;
         setDailySubmitting(true);
         try {
             const token = await AsyncStorage.getItem('st_paisios_token');
@@ -267,7 +349,10 @@ export default function HomeScreen() {
                 ? { ...response.data.data, ...response.data }
                 : response.data;
             const isCorrect = result?.is_correct === true || result?.isCorrect === true;
-            const awardedPoints = isCorrect ? 1 : 0;
+            const awardedPoints = Number(result?.awardedPoints);
+            if (!Number.isSafeInteger(awardedPoints) || awardedPoints < 0 || (!isCorrect && awardedPoints !== 0)) {
+                throw new Error('The daily question response has an invalid awarded points value.');
+            }
             if (userId) {
                 await saveDailyAnsweredDate(userId, localDate);
             }
@@ -280,16 +365,23 @@ export default function HomeScreen() {
                 return;
             }
             const updatedPoints = Number(result?.updated_points ?? result?.totalPoints);
-            handlePointsAwarded(
+            await updatePoints(
                 awardedPoints,
-                Number.isFinite(updatedPoints) ? updatedPoints : undefined
+                Number.isFinite(updatedPoints) ? updatedPoints : undefined,
+                0,
+                userId
             );
             setShowDailySuccessModal(true);
-            loadPointNotifications();
         } catch (error) {
             console.log("Submit Payload Sent:", payload);
             console.log("Submit Server Error:", error.response?.data);
-            if (error.response?.status === 409) {
+            if (error.response?.data?.code === 'POINT_SETTINGS_CHANGED') {
+                await loadDailyQuestion(userId);
+                Alert.alert(
+                    'تم تحديث مكافأة السؤال',
+                    'تم تحميل قيمة المكافأة الجديدة. راجعها ثم أعد إرسال إجابتك.'
+                );
+            } else if (error.response?.status === 409) {
                 if (userId) {
                     await saveDailyAnsweredDate(userId, localDate);
                 }
@@ -307,6 +399,7 @@ export default function HomeScreen() {
                 );
             }
         } finally {
+            localPointsSubmissionRef.current = false;
             setDailySubmitting(false);
         }
     };
@@ -315,7 +408,6 @@ export default function HomeScreen() {
         setShowWrongAnswerModal(false);
         setModalVisible(false);
         setShowDailyCompletion(false);
-        loadPointNotifications();
     };
 
     return (
@@ -323,9 +415,21 @@ export default function HomeScreen() {
             <SettingsButton />
             <VerseComponent />
             <CustomButton
-                onPointsAwarded={handlePointsAwarded}
+                onPointsAwarded={updatePoints}
                 onOptimisticPointsChange={handleOptimisticPointsChange}
                 onSnackbar={(type, message) => setSnackbar({ type, message })}
+                onAchievementsUnlocked={setUnlockedAchievements}
+            />
+
+            <AchievementUnlockedModal
+                achievements={unlockedAchievements}
+                onClose={() => setUnlockedAchievements([])}
+            />
+
+            <PointNotificationModal
+                visible={isModalVisible}
+                points={pointNotificationAmount}
+                onClose={() => setIsModalVisible(false)}
             />
 
             {snackbar && (
@@ -356,7 +460,7 @@ export default function HomeScreen() {
             )}
 
             <Image
-                source={require('../../../assets/images/st-paisios.png')}
+                source={require('../../../assets/images/st-paisios.jpg')}
                 style={styles.icon}
                 resizeMode="cover"
             />
@@ -428,7 +532,7 @@ export default function HomeScreen() {
                         ))}
                         {!dailyAnswered && (
                             <Text style={styles.dailyResultSubText}>
-                                المكافأة: {formatArabicPoints(1)}
+                                المكافأة: {formatArabicPoints(Number(dailyQuestion?.points ?? 0))}
                             </Text>
                         )}
 
@@ -467,7 +571,7 @@ export default function HomeScreen() {
                             <Text style={styles.dailySuccessIconText}>✓</Text>
                         </View>
                         <Text style={styles.dailySuccessMessage}>
-                            إجابة صحيحة ✅ لقد كسبت نقطة جديدة!
+                            إجابة صحيحة ✅ لقد كسبت {formatArabicPoints(dailyAwardedPoints)}!
                         </Text>
                         <TouchableOpacity
                             accessibilityRole="button"
@@ -507,59 +611,6 @@ export default function HomeScreen() {
                             onPress={closeWrongAnswerModal}
                         >
                             <Text style={styles.wrongAnswerButtonText}>إغلاق</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            <Modal
-                visible={Boolean(activePointNotification)}
-                transparent
-                animationType="fade"
-                onRequestClose={closePointNotification}
-            >
-                <View style={styles.dailyModalOverlay}>
-                    <View style={styles.dailyModalCard}>
-                        {activePointNotification?.isPositive && (
-                            <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, overflow: 'hidden' }}>
-                                {CONFETTI_PARTICLES.map((particle, index) => {
-                                    const progress = confettiAnimations[index];
-                                    return (
-                                        <Animated.View
-                                            key={index}
-                                            style={{
-                                                position: 'absolute',
-                                                top: -16,
-                                                left: particle.left,
-                                                width: particle.width,
-                                                height: particle.width * 1.5,
-                                                borderRadius: 2,
-                                                backgroundColor: particle.color,
-                                                opacity: progress.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 1, 0] }),
-                                                transform: [
-                                                    { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 340] }) },
-                                                    { rotate: progress.interpolate({ inputRange: [0, 1], outputRange: ['0deg', particle.rotation] }) },
-                                                ],
-                                            }}
-                                        />
-                                    );
-                                })}
-                            </View>
-                        )}
-                        <Text style={styles.dailyModalTitle}>
-                            {activePointNotification?.isPositive ? 'مبارك!' : 'تنبيه:'}
-                        </Text>
-                        <Text style={styles.dailyQuestionText}>
-                            {activePointNotification?.isPositive
-                                ? `تم منحك ${formatArabicPoints(Number(activePointNotification.amount))}`
-                                : `تم خصم ${formatArabicPoints(Number(activePointNotification?.amount))} من رصيدك`}
-                        </Text>
-                        <TouchableOpacity
-                            style={styles.sheetButton}
-                            activeOpacity={0.8}
-                            onPress={closePointNotification}
-                        >
-                            <Text style={styles.sheetButtonText}>حسنًا</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

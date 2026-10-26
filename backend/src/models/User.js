@@ -1,5 +1,25 @@
 const mongoose = require('mongoose')
 
+const achievementProgressEntrySchema = new mongoose.Schema(
+  {
+    currentValue: { type: Number, default: 0, min: 0 },
+    currentTier: { type: Number, default: 0, min: 0, max: 3 },
+  },
+  { _id: false }
+)
+
+const achievementsProgressSchema = new mongoose.Schema(
+  {
+    prayer: { type: achievementProgressEntrySchema, default: () => ({}) },
+    fasting: { type: achievementProgressEntrySchema, default: () => ({}) },
+    bible: { type: achievementProgressEntrySchema, default: () => ({}) },
+    church: { type: achievementProgressEntrySchema, default: () => ({}) },
+    goodDeed: { type: achievementProgressEntrySchema, default: () => ({}) },
+    perfectDay: { type: achievementProgressEntrySchema, default: () => ({}) },
+  },
+  { _id: false }
+)
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -18,7 +38,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    expoPushToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
     totalPoints: {
+      type: Number,
+      default: 0,
+    },
+    hasUnseenPointsUpdate: {
+      type: Boolean,
+      default: false,
+    },
+    unseenPointsDifference: {
       type: Number,
       default: 0,
     },
@@ -47,6 +80,10 @@ const userSchema = new mongoose.Schema(
     extraPoints: {
       type: Number,
       default: 0,
+    },
+    achievementsProgress: {
+      type: achievementsProgressSchema,
+      default: () => ({}),
     },
     pointNotifications: {
       type: [

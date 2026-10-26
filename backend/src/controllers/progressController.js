@@ -4,6 +4,7 @@ const User = require('../models/User')
 const Settings = require('../models/Settings')
 const PointTransaction = require('../models/PointTransaction')
 const PointLog = require('../models/PointLog')
+const { actionPointDefaults, pointSettingFields, perfectMonthRewardPoints } = require('../config/pointConfig')
 
 const achievementTargets = {
   prayer: [10, 30, 100],
@@ -11,7 +12,7 @@ const achievementTargets = {
   bible: [10, 30, 100],
   church: [10, 30, 100],
   goodDeed: [10, 30, 100],
-  perfectDay: [7, 30, 100],
+  perfectDay: [10, 30, 100],
 }
 const grandPrizeMilestones = [
   { level: 1, name: 'مواظب', pointsNeeded: 1000 },
@@ -42,7 +43,6 @@ const pointSourceByAction = {
   church: 'church',
   goodDeed: 'goodDeed',
 }
-const defaultPoints = { prayer: 5, fasting: 5, bible: 10, church: 8, goodDeed: 7 }
 const actionAchievementByCounter = {
   prayerCount: 'prayer',
   fastingCount: 'fasting',
@@ -56,7 +56,7 @@ const achievementDefinitions = {
   bible: { title: 'محب الكلمة', levelField: 'bibleAchievedLevel', countField: 'bible', thresholds: achievementTargets.bible, rewards: [30, 100, 500] },
   church: { title: 'ابن الكنيسة', levelField: 'churchAchievedLevel', countField: 'church', thresholds: achievementTargets.church, rewards: [30, 100, 500] },
   mercy: { title: 'القلب الرحيم', levelField: 'goodDeedAchievedLevel', countField: 'goodDeed', thresholds: achievementTargets.goodDeed, rewards: [30, 100, 500] },
-  perfectCombo: { title: 'اليوم المثالي', levelField: 'perfectDayAchievedLevel', thresholds: achievementTargets.perfectDay, rewards: [50, 200, 1000] },
+  perfectCombo: { title: 'اليوم المثالي', levelField: 'perfectDayAchievedLevel', thresholds: achievementTargets.perfectDay, rewards: [30, 100, 500] },
 }
 const dailyActionFields = Object.keys(actionAchievementByCounter)
 const achievementLevelFields = {
@@ -66,6 +66,22 @@ const achievementLevelFields = {
   church: 'churchAchievedLevel',
   goodDeed: 'goodDeedAchievedLevel',
   perfectDay: 'perfectDayAchievedLevel',
+}
+const achievementCounterKeys = {
+  prayer: 'prayer',
+  fasting: 'fasting',
+  bible: 'bible',
+  church: 'church',
+  goodDeed: 'goodDeed',
+  perfectDay: 'perfectDaysCount',
+}
+const achievementProgressKeyById = {
+  prayer: 'prayer',
+  fasting: 'fasting',
+  bible: 'bible',
+  church: 'church',
+  mercy: 'goodDeed',
+  perfectCombo: 'perfectDay',
 }
 const getRewardMilestone = (points) => (
   [...grandPrizeMilestones].reverse().find((milestone) => points >= milestone.pointsNeeded) || null
@@ -113,15 +129,14 @@ const getSyriaMonthContext = (dateString) => {
 
 const getConfiguredPoints = async () => {
   const settings = await Settings.findOne({ key: 'global' })
-    .select('prayerPoints fastingPoints biblePoints churchPoints goodDeedPoints')
+    .select(Object.values(pointSettingFields).join(' '))
     .lean()
-  return {
-    prayer: settings?.prayerPoints ?? defaultPoints.prayer,
-    fasting: settings?.fastingPoints ?? defaultPoints.fasting,
-    bible: settings?.biblePoints ?? defaultPoints.bible,
-    church: settings?.churchPoints ?? defaultPoints.church,
-    goodDeed: settings?.goodDeedPoints ?? defaultPoints.goodDeed,
-  }
+  return Object.fromEntries(
+    Object.entries(pointSettingFields).map(([action, field]) => [
+      action,
+      settings?.[field] ?? actionPointDefaults[action],
+    ])
+  )
 }
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -183,6 +198,7 @@ const getProgress = async (req, res) => {
         totalDeductedPoints: user.totalDeductedPoints ?? Math.max(-(user.totalPoints ?? 0), 0),
         quizPoints: user.quizPoints ?? 0,
         extraPoints: user.extraPoints ?? 0,
+        perfectMonthRewardPoints,
         pointNotifications: (user.pointNotifications ?? []).filter((notification) => !notification.isRead),
         pointsByActivity,
       },
@@ -273,33 +289,65 @@ const getMyAchievementsProgress = async (req, res) => {
   try {
     const [progress, user] = await Promise.all([
       Progress.findOne({ user: req.user._id }).lean(),
-      User.findById(req.user._id).select('_id totalEarnedPoints totalPoints').lean(),
+      User.findById(req.user._id)
+        .select('_id totalEarnedPoints totalPoints achievementsProgress')
+        .lean(),
     ])
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'المستخدم غير موجود.' })
     }
 
+    const storedAchievementsProgress = user.achievementsProgress ?? {}
     const userAchievements = Object.fromEntries(
       Object.entries(achievementLevelFields).map(([achievement, field]) => [
         achievement,
-        Math.min(3, Math.max(0, Number(progress?.achievements?.[field]) || 0)),
+        Math.min(3, Math.max(
+          Number(storedAchievementsProgress[achievement]?.currentTier) || 0,
+          Number(progress?.achievements?.[field]) || 0
+        )),
       ])
     )
+    const achievementsProgress = Object.fromEntries(
+      Object.entries(achievementCounterKeys).map(([achievement, counterKey]) => {
+        const legacyCurrentValue = achievement === 'perfectDay'
+          ? progress?.perfectDaysCount ?? 0
+          : progress?.achievementCounts?.[counterKey]
+            ?? progress?.[`${counterKey}Count`]
+            ?? 0
+        return [
+          achievement,
+          {
+            currentValue: Math.max(
+              Number(storedAchievementsProgress[achievement]?.currentValue) || 0,
+              Number(legacyCurrentValue) || 0
+            ),
+            currentTier: userAchievements[achievement],
+          },
+        ]
+      })
+    )
     const userStats = {
-      prayerCount: Number(progress?.prayerCount ?? progress?.achievementCounts?.prayer ?? 0),
-      fastingCount: Number(progress?.fastingCount ?? progress?.achievementCounts?.fasting ?? 0),
-      bibleCount: Number(progress?.bibleCount ?? progress?.achievementCounts?.bible ?? 0),
-      churchCount: Number(progress?.churchCount ?? progress?.achievementCounts?.church ?? 0),
-      goodDeedCount: Number(progress?.goodDeedCount ?? progress?.achievementCounts?.goodDeed ?? 0),
-      perfectDaysCount: Number(progress?.perfectDaysCount ?? 0),
+      prayerCount: achievementsProgress.prayer.currentValue,
+      fastingCount: achievementsProgress.fasting.currentValue,
+      bibleCount: achievementsProgress.bible.currentValue,
+      churchCount: achievementsProgress.church.currentValue,
+      goodDeedCount: achievementsProgress.goodDeed.currentValue,
+      perfectDaysCount: achievementsProgress.perfectDay.currentValue,
       totalEarnedPoints: Number(user.totalEarnedPoints ?? Math.max(user.totalPoints ?? 0, 0)),
     }
 
     return res.status(200).json({
       success: true,
       data: {
-        globalConfig: { achievementTargets, grandPrizeMilestones },
+        globalConfig: {
+          achievementTargets,
+          achievementRewards: Object.fromEntries(
+            Object.entries(achievementDefinitions).map(([id, definition]) => [id, definition.rewards])
+          ),
+          grandPrizeMilestones,
+        },
+        achievementsProgress,
         userStats,
         userAchievements,
       },
@@ -312,6 +360,7 @@ const getMyAchievementsProgress = async (req, res) => {
 
 const logAction = async (req, res) => {
   const action = req.body?.action
+  const expectedPoints = req.body?.expectedPoints
   const field = actionAchievementByCounter[action] ? action : (
     Object.entries(pointsActionByCounter).find(([, actionKey]) => actionKey === action)?.[0]
   )
@@ -321,6 +370,13 @@ const logAction = async (req, res) => {
       message: 'النشاط المرسل غير صالح.',
     })
   }
+  if (expectedPoints !== undefined && (!Number.isSafeInteger(expectedPoints) || expectedPoints < 0)) {
+    return res.status(400).json({
+      success: false,
+      message: 'قيمة النقاط المتوقعة غير صالحة.',
+    })
+  }
+  req.expectedActionPoints = expectedPoints
   req.body = { counterIncrements: { [field]: 1 } }
   return updateProgress(req, res)
 }
@@ -356,9 +412,21 @@ const updateProgress = async (req, res) => {
 
     const hasCounterUpdates = Object.values(counterIncrements).some((value) => value > 0)
     let actionPoints = 0
-    let configuredPoints = defaultPoints
+    let configuredPoints = actionPointDefaults
     if (Object.keys(counterIncrements).length > 0) {
       configuredPoints = await getConfiguredPoints()
+      const action = Object.entries(counterIncrements).find(([, increment]) => increment > 0)
+      if (
+        req.expectedActionPoints !== undefined &&
+        action &&
+        configuredPoints[pointsActionByCounter[action[0]]] !== req.expectedActionPoints
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: 'POINT_SETTINGS_CHANGED',
+          message: 'تم تحديث إعدادات النقاط. أعد المحاولة بالقيمة الجديدة.',
+        })
+      }
       actionPoints = Object.entries(counterIncrements).reduce((total, [counter, increment]) => {
         const action = pointsActionByCounter[counter]
         return total + increment * configuredPoints[action]
@@ -387,6 +455,7 @@ const updateProgress = async (req, res) => {
 
     const session = await mongoose.startSession()
     let progress
+    let user
     let totalPoints = req.user.totalPoints
     let alreadyCompletedToday = false
     let achievementRewards = []
@@ -400,6 +469,13 @@ const updateProgress = async (req, res) => {
         alreadyCompletedToday = false
         progress = await Progress.findOne({ user: req.user._id }).session(session)
           || new Progress({ user: req.user._id })
+        user = await User.findById(req.user._id).session(session)
+        if (!user) {
+          const error = new Error('User not found.')
+          error.code = 'USER_NOT_FOUND'
+          throw error
+        }
+        user.initializePointTotals()
         progress.achievements ||= {}
         progress.achievementCounts ||= {}
         progress.claimedPerfectMonths ||= []
@@ -430,12 +506,21 @@ const updateProgress = async (req, res) => {
           const achievementId = actionAchievementByCounter[field]
           const definition = achievementDefinitions[achievementId]
           progress.achievementCounts[definition.countField] += increment
+          const userAchievement = user.achievementsProgress[achievementProgressKeyById[achievementId]]
+          const legacyTier = progress.achievements[definition.levelField] || 0
+          const currentValue = Math.max(
+            Number(userAchievement.currentValue) || 0,
+            progress.achievementCounts[definition.countField] - increment
+          ) + increment
+          const currentTier = Math.max(Number(userAchievement.currentTier) || 0, legacyTier)
           const { currentLevel, rewards } = awardAchievementLevels(
             achievementId,
-            progress.achievementCounts[definition.countField],
-            progress.achievements[definition.levelField]
+            currentValue,
+            currentTier
           )
           progress.achievements[definition.levelField] = currentLevel
+          userAchievement.currentValue = currentValue
+          userAchievement.currentTier = currentLevel
           achievementRewards.push(...rewards)
         }
 
@@ -445,12 +530,22 @@ const updateProgress = async (req, res) => {
         ) {
           progress.perfectDaysCount += 1
           const combo = achievementDefinitions.perfectCombo
+          const userAchievement = user.achievementsProgress[achievementProgressKeyById.perfectCombo]
+          const currentValue = Math.max(
+            Number(userAchievement.currentValue) || 0,
+            progress.perfectDaysCount - 1
+          ) + 1
           const { currentLevel, rewards } = awardAchievementLevels(
             'perfectCombo',
-            progress.perfectDaysCount,
-            progress.achievements[combo.levelField]
+            currentValue,
+            Math.max(
+              Number(userAchievement.currentTier) || 0,
+              progress.achievements[combo.levelField] || 0
+            )
           )
           progress.achievements[combo.levelField] = currentLevel
+          userAchievement.currentValue = currentValue
+          userAchievement.currentTier = currentLevel
           achievementRewards.push(...rewards)
         }
 
@@ -489,7 +584,7 @@ const updateProgress = async (req, res) => {
           )
           if (completedDays === daysInMonth && !alreadyClaimed) {
             progress.claimedPerfectMonths.push({ actionType, monthYear })
-            perfectMonthRewards.push({ actionType, title: calendarAction.title, amount: 1000 })
+            perfectMonthRewards.push({ actionType, title: calendarAction.title, amount: perfectMonthRewardPoints })
           }
         }
 
@@ -498,17 +593,11 @@ const updateProgress = async (req, res) => {
         const perfectMonthPoints = perfectMonthRewards.reduce((total, reward) => total + reward.amount, 0)
         const points = actionPoints + achievementPoints + perfectMonthPoints
         if (points > 0) {
-          const user = await User.findById(req.user._id).session(session)
-          if (!user) {
-            const error = new Error('User not found.')
-            error.code = 'USER_NOT_FOUND'
-            throw error
-          }
-
-          user.initializePointTotals()
           user.totalEarnedPoints += points
-          await user.save({ session })
-          totalPoints = user.totalPoints
+        }
+        await user.save({ session })
+        totalPoints = user.totalPoints
+        if (points > 0) {
           if (pointTransactions.length > 0) {
             await PointTransaction.insertMany(pointTransactions, { session })
           }
@@ -561,12 +650,20 @@ const updateProgress = async (req, res) => {
       data: {
         progress,
         totalPoints,
+        baseActionPoints: actionPoints,
         awardedPoints: actionPoints
           + achievementRewards.reduce((total, reward) => total + reward.amount, 0)
           + perfectMonthRewards.reduce((total, reward) => total + reward.amount, 0),
         achievementRewards,
+        newlyUnlocked: achievementRewards.map((reward) => ({
+          achievementId: reward.achievementId,
+          name: reward.title,
+          level: reward.level,
+          points: reward.amount,
+        })),
         perfectMonthAchieved: perfectMonthRewards.length > 0,
         perfectMonthAction: perfectMonthRewards[0]?.title ?? null,
+        perfectMonthPoints: perfectMonthRewards.reduce((total, reward) => total + reward.amount, 0),
       },
     })
   } catch (error) {

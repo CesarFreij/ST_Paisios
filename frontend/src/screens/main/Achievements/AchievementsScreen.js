@@ -1,66 +1,158 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 import api from '../../../api/apiClient'
+import { formatArabicPoints } from '../../../utils/formatArabicPoints'
 import styles from './styles'
 
 const achievementCards = [
-  { id: 'prayer', targetKey: 'prayer', countKey: 'prayerCount', title: 'المصلي الدائم', icon: 'praying-hands', iconSet: FontAwesome5 },
-  { id: 'fasting', targetKey: 'fasting', countKey: 'fastingCount', title: 'الصائم الملتزم', icon: 'moon', iconSet: FontAwesome5 },
-  { id: 'bible', targetKey: 'bible', countKey: 'bibleCount', title: 'محب الكلمة', icon: 'bible', iconSet: FontAwesome5 },
-  { id: 'church', targetKey: 'church', countKey: 'churchCount', title: 'ابن الكنيسة', icon: 'church', iconSet: FontAwesome5 },
-  { id: 'goodDeed', targetKey: 'goodDeed', countKey: 'goodDeedCount', title: 'القلب الرحيم', icon: 'hand-holding-heart', iconSet: FontAwesome6 },
-  { id: 'perfectDay', targetKey: 'perfectDay', countKey: 'perfectDaysCount', title: 'اليوم المثالي', icon: 'star', iconSet: FontAwesome5 },
+  { id: 'prayer', rewardKey: 'prayer', targetKey: 'prayer', countKey: 'prayerCount', title: 'المصلي الدائم', icon: 'praying-hands', iconSet: FontAwesome5 },
+  { id: 'fasting', rewardKey: 'fasting', targetKey: 'fasting', countKey: 'fastingCount', title: 'الصائم الملتزم', icon: 'moon', iconSet: FontAwesome5 },
+  { id: 'bible', rewardKey: 'bible', targetKey: 'bible', countKey: 'bibleCount', title: 'محب الكلمة', icon: 'bible', iconSet: FontAwesome5 },
+  { id: 'church', rewardKey: 'church', targetKey: 'church', countKey: 'churchCount', title: 'ابن الكنيسة', icon: 'church', iconSet: FontAwesome5 },
+  { id: 'goodDeed', rewardKey: 'mercy', targetKey: 'goodDeed', countKey: 'goodDeedCount', title: 'القلب الرحيم', icon: 'hand-holding-heart', iconSet: FontAwesome6 },
+  { id: 'perfectDay', rewardKey: 'perfectCombo', targetKey: 'perfectDay', countKey: 'perfectDaysCount', title: 'اليوم المثالي', icon: 'star', iconSet: FontAwesome5 },
 ]
 
+const defaultAchievementTargets = {
+  prayer: [10, 30, 100],
+  fasting: [10, 30, 100],
+  bible: [10, 30, 100],
+  church: [10, 30, 100],
+  goodDeed: [10, 30, 100],
+  perfectDay: [10, 30, 100],
+}
+const defaultAchievementRewards = {
+  prayer: [30, 100, 500],
+  fasting: [30, 100, 500],
+  bible: [30, 100, 500],
+  church: [30, 100, 500],
+  mercy: [30, 100, 500],
+  perfectCombo: [30, 100, 500],
+}
+const defaultGrandPrizeMilestones = [
+  { level: 1, name: 'مواظب', pointsNeeded: 1000 },
+  { level: 2, name: 'متقدم', pointsNeeded: 3500 },
+  { level: 3, name: 'متميز', pointsNeeded: 8000 },
+  { level: 4, name: 'رائد', pointsNeeded: 14000 },
+  { level: 5, name: 'بطل السنة', pointsNeeded: 20000 },
+]
+const achievementCountKeys = {
+  prayer: 'prayerCount',
+  fasting: 'fastingCount',
+  bible: 'bibleCount',
+  church: 'churchCount',
+  goodDeed: 'goodDeedCount',
+  perfectDay: 'perfectDaysCount',
+}
 const textStyles = { textAlign: 'right', writingDirection: 'rtl' }
 const formatPoints = (points) => Number(points || 0).toLocaleString('en-US')
 
 export default function AchievementsScreen() {
   const navigation = useNavigation()
   const [payload, setPayload] = useState(null)
+  const [userTotalPoints, setUserTotalPoints] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [retryKey, setRetryKey] = useState(0)
   const trailAnimation = useRef(new Animated.Value(0)).current
 
-  useEffect(() => {
-    let active = true
-    const loadProgress = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const response = await api.get('/api/achievements/my-progress')
-        const result = response.data?.data
-        const targets = result?.globalConfig?.achievementTargets
-        const milestones = result?.globalConfig?.grandPrizeMilestones
-        if (
-          !result ||
-          !targets ||
-          !Array.isArray(milestones) ||
-          !result.userStats ||
-          !result.userAchievements
-        ) {
-          throw new Error('Invalid achievements progress response.')
+  useFocusEffect(
+    useCallback(() => {
+      let active = true
+      const loadProgress = async () => {
+        setLoading(true)
+        setError('')
+        try {
+          const [response, userResponse] = await Promise.all([
+            api.get('/api/achievements/my-progress'),
+            api.get('/api/auth/me'),
+          ])
+          console.log('Raw Achievements:', response.data)
+          const responseData = response.data ?? {}
+          const result = responseData.data ?? responseData
+          const currentUser = userResponse.data?.data
+          const achievements = responseData.achievements
+            ?? responseData.progress
+            ?? result.achievementsProgress
+            ?? result.userAchievements
+            ?? {}
+          const targets = {
+            ...defaultAchievementTargets,
+            ...result.globalConfig?.achievementTargets,
+          }
+          const achievementRewards = {
+            ...defaultAchievementRewards,
+            ...result.globalConfig?.achievementRewards,
+          }
+          const milestones = result.globalConfig?.grandPrizeMilestones ?? defaultGrandPrizeMilestones
+          const userStats = result.userStats ?? result.progress ?? {}
+          const userAchievements = result.userAchievements ?? achievements
+          const achievementsProgress = Object.fromEntries(
+            achievementCards.map((item) => {
+              const saved = result.achievementsProgress?.[item.id] ?? achievements?.[item.id] ?? {}
+              return [
+                item.id,
+                {
+                  currentValue: Math.max(
+                    0,
+                    Number(saved.currentValue ?? userStats[achievementCountKeys[item.id]]) || 0
+                  ),
+                  currentTier: Math.min(
+                    3,
+                    Math.max(0, Number(saved.currentTier ?? userAchievements?.[item.id]) || 0)
+                  ),
+                },
+              ]
+            })
+          )
+          const normalizedResult = {
+            ...result,
+            globalConfig: {
+              ...result.globalConfig,
+              achievementTargets: targets,
+              achievementRewards,
+              grandPrizeMilestones: milestones,
+            },
+            achievementsProgress,
+            userStats: {
+              ...userStats,
+              ...Object.fromEntries(
+                achievementCards.map((item) => [
+                  achievementCountKeys[item.id],
+                  achievementsProgress[item.id].currentValue,
+                ])
+              ),
+              totalEarnedPoints: Number(userStats.totalEarnedPoints) || 0,
+            },
+            userAchievements: Object.fromEntries(
+              achievementCards.map((item) => [
+                item.id,
+                achievementsProgress[item.id].currentTier,
+              ])
+            ),
+          }
+          if (active) {
+            setPayload(normalizedResult)
+            setUserTotalPoints(Number(currentUser?.totalPoints) || 0)
+          }
+        } catch (requestError) {
+          console.error('Failed to load achievements progress:', requestError)
+          if (active) setError('تعذر تحميل الإنجازات ومسار الجوائز.')
+        } finally {
+          if (active) setLoading(false)
         }
-        if (active) setPayload(result)
-      } catch (requestError) {
-        console.error('Failed to load achievements progress:', requestError)
-        if (active) setError('تعذر تحميل الإنجازات ومسار الجوائز.')
-      } finally {
-        if (active) setLoading(false)
       }
-    }
 
-    loadProgress()
-    return () => {
-      active = false
-    }
-  }, [retryKey])
+      loadProgress()
+      return () => {
+        active = false
+      }
+    }, [retryKey])
+  )
 
   const globalConfig = payload?.globalConfig
   const userStats = payload?.userStats
@@ -89,7 +181,7 @@ export default function AchievementsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -105,13 +197,13 @@ export default function AchievementsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#348cb2" />
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   if (error || !payload) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -134,12 +226,12 @@ export default function AchievementsScreen() {
             <Text style={[styles.retryText, textStyles]}>إعادة المحاولة</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -160,10 +252,18 @@ export default function AchievementsScreen() {
         </View>
 
         {achievementCards.map((item) => {
-          const targetList = globalConfig.achievementTargets[item.targetKey]
-          const level = Math.min(3, Math.max(0, Number(userAchievements[item.id]) || 0))
-          const count = Math.max(0, Number(userStats[item.countKey]) || 0)
-          const nextTarget = level < targetList.length ? Number(targetList[level]) : null
+          const targetList = globalConfig.achievementTargets[item.targetKey] ?? defaultAchievementTargets[item.targetKey]
+          const rewardList = globalConfig.achievementRewards?.[item.rewardKey] ?? defaultAchievementRewards[item.rewardKey]
+          const achievementProgress = payload.achievementsProgress?.[item.id] ?? { currentValue: 0, currentTier: 0 }
+          const level = Math.min(3, Math.max(0, Number(
+            achievementProgress?.currentTier ?? userAchievements[item.id]
+          ) || 0))
+          const count = Math.max(0, Number(
+            achievementProgress?.currentValue ?? userStats[item.countKey]
+          ) || 0)
+          const nextTierIndex = targetList.findIndex((target) => count < Number(target))
+          const nextTarget = nextTierIndex >= 0 ? Number(targetList[nextTierIndex]) : null
+          const rewardValue = nextTierIndex >= 0 ? Number(rewardList[nextTierIndex]) : null
           const progressPercent = nextTarget
             ? Math.min(100, (count / nextTarget) * 100)
             : 100
@@ -178,7 +278,11 @@ export default function AchievementsScreen() {
                 <View style={styles.cardHeading}>
                   <Text style={[styles.cardTitle, textStyles]}>{item.title}</Text>
                   <Text style={[styles.cardDescription, textStyles]}>
-                    {nextTarget === null ? 'اكتمل الإنجاز' : `الهدف التالي: ${formatPoints(nextTarget)}`}
+                    {nextTarget === null
+                      ? 'اكتمل الإنجاز'
+                      : Number.isSafeInteger(rewardValue) && rewardValue > 0
+                        ? `مكافأة الهدف القادم: ${formatArabicPoints(rewardValue)}`
+                        : 'مكافأة الهدف القادم'}
                   </Text>
                 </View>
               </View>
@@ -228,45 +332,53 @@ export default function AchievementsScreen() {
         <View style={styles.pathCard}>
           <View style={styles.pathSummary}>
             <Text style={[styles.pointsTotal, textStyles]}>
-              {formatPoints(totalEarnedPoints)} نقطة مكتسبة
+              {formatPoints(userTotalPoints)} نقطة مكتسبة
             </Text>
             {currentMilestone ? (
               <Text style={[styles.currentTitle, textStyles]}>{currentMilestone.name}</Text>
             ) : null}
           </View>
           <View style={styles.pathTrack}>
-            <View style={styles.pathRail} />
-            <Animated.View
-              style={[
-                styles.pathFill,
-                {
-                  height: trailAnimation.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: ['0%', '100%'],
-                  }),
-                },
-              ]}
-            />
-            {milestones.map((milestone) => {
+            {milestones.map((milestone, index) => {
               const reached = totalEarnedPoints >= milestone.pointsNeeded
+              const segmentStart = (index / Math.max(milestones.length - 1, 1)) * 100
+              const segmentEnd = ((index + 1) / Math.max(milestones.length - 1, 1)) * 100
               return (
-                <View key={milestone.level} style={styles.milestoneRow}>
-                  <View style={[styles.milestoneDot, reached ? styles.milestoneUnlocked : styles.milestoneLocked]}>
-                    {reached
-                      ? <FontAwesome name="check" size={13} color="#ffffff" />
-                      : <Text style={[styles.milestoneNumber, textStyles]}>{milestone.level}</Text>}
-                  </View>
-                  <View style={styles.milestoneInfo}>
-                    <Text style={[styles.milestoneName, textStyles, reached && styles.milestoneNameUnlocked]}>
-                      {milestone.name}
+                <View key={milestone.level} style={styles.milestoneItem}>
+                  {index < milestones.length - 1 ? (
+                    <View style={styles.milestoneConnector}>
+                      <Animated.View
+                        style={[
+                          styles.milestoneConnectorFill,
+                          {
+                            height: trailAnimation.interpolate({
+                              inputRange: [segmentStart, segmentEnd],
+                              outputRange: ['0%', '100%'],
+                              extrapolate: 'clamp',
+                            }),
+                          },
+                        ]}
+                      />
+                    </View>
+                  ) : null}
+                  <View style={styles.milestoneRow}>
+                    <View style={[styles.milestoneDot, reached ? styles.milestoneUnlocked : styles.milestoneLocked]}>
+                      {reached
+                        ? <FontAwesome name="check" size={13} color="#ffffff" />
+                        : <Text style={[styles.milestoneNumber, textStyles]}>{milestone.level}</Text>}
+                    </View>
+                    <View style={styles.milestoneInfo}>
+                      <Text style={[styles.milestoneName, textStyles, reached && styles.milestoneNameUnlocked]}>
+                        {milestone.name}
+                      </Text>
+                      <Text style={[styles.milestonePoints, textStyles]}>
+                        {formatPoints(milestone.pointsNeeded)} نقطة
+                      </Text>
+                    </View>
+                    <Text style={[styles.milestoneStatus, textStyles, reached && styles.milestoneNameUnlocked]}>
+                      {reached ? 'تم الفتح' : 'مقفلة'}
                     </Text>
-                    <Text style={[styles.milestonePoints, textStyles]}>
-                      {formatPoints(milestone.pointsNeeded)} نقطة
-                    </Text>
                   </View>
-                  <Text style={[styles.milestoneStatus, textStyles, reached && styles.milestoneNameUnlocked]}>
-                    {reached ? 'تم الفتح' : 'مقفلة'}
-                  </Text>
                 </View>
               )
             })}
@@ -278,6 +390,6 @@ export default function AchievementsScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
