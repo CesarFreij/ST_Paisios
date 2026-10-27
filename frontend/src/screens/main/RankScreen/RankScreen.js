@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import api from '../../../api/apiClient';
@@ -8,7 +8,7 @@ import styles from './styles';
 
 const roleBadges = {
     owner: { label: 'مالك', style: styles.ownerRoleBadge },
-    admin: { label: 'مرشد', style: styles.adminRoleBadge },
+    admin: { label: 'ادمن', style: styles.adminRoleBadge },
     user: { label: 'مستخدم', style: styles.userRoleBadge },
 };
 
@@ -30,7 +30,6 @@ export default function RankScreen() {
         setError('');
 
         try {
-            // تم إصلاح الرابط هنا بإزالة /api المكررة
             const response = await api.get('/api/users/rank', {
                 params: { page: requestedPage, limit: 20 },
             });
@@ -123,7 +122,7 @@ export default function RankScreen() {
                 <Text style={styles.title}>ترتيبي</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Text style={styles.backText}>رجوع</Text>
-                <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+                <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
                 </TouchableOpacity>
             </View>
 

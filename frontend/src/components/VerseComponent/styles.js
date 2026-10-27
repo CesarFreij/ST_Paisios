@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     container: {
@@ -29,6 +30,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
         textDecorationLine: 'underline',
+        ...webTextAlignRight,
     },
 });
 

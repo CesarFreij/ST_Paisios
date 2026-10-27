@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native'
+import { Platform, StyleSheet } from 'react-native'
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -19,10 +20,12 @@ const styles = StyleSheet.create({
     color: '#0b3d91',
     fontSize: 28,
     fontWeight: 'bold',
-    direction: 'ltr'
+    ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
+    ...webTextAlignRight,
   },
   backButton: {
     flexDirection: 'row-reverse',
+    ...Platform.select({ web: { gap: 8 }, default: {} }),
     alignItems: 'center',
     marginStart: 12,
   },
@@ -30,7 +33,9 @@ const styles = StyleSheet.create({
     color: '#348cb2',
     fontSize: 16,
     marginEnd: 8,
+    ...Platform.select({ web: { marginEnd: 0 }, default: {} }),
     fontWeight: '600',
+    ...webTextAlignRight,
   },
   content: {
     paddingHorizontal: 20,
@@ -49,11 +54,15 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     marginTop: 8,
   },
+  webSectionIcon: {
+    marginRight: 0,
+  },
   sectionTitle: {
     color: '#0b3d91',
     fontSize: 21,
     fontWeight: '800',
-    direction: 'ltr'
+    ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
+    ...webTextAlignRight,
   },
   stateContainer: {
     flex: 1,
@@ -65,6 +74,7 @@ const styles = StyleSheet.create({
   stateText: {
     color: '#63738f',
     fontSize: 16,
+    ...webTextAlignRight,
   },
   retryButton: {
     paddingHorizontal: 18,
@@ -75,6 +85,7 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#ffffff',
     fontWeight: '700',
+    ...webTextAlignRight,
   },
   achievementCard: {
     padding: 17,
@@ -104,19 +115,22 @@ const styles = StyleSheet.create({
   cardHeading: {
     flex: 1,
     marginEnd: 12,
+    ...Platform.select({ web: { marginEnd: 0 }, default: {} }),
   },
   cardTitle: {
     color: '#0b3d91',
     fontSize: 16,
     fontWeight: '800',
-    direction: 'ltr'
+    ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
+    ...webTextAlignRight,
   },
   cardDescription: {
     marginTop: 4,
     color: '#718198',
     fontSize: 12,
     lineHeight: 18,
-    direction: 'ltr'
+    ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
+    ...webTextAlignRight,
   },
   starsRow: {
     flexDirection: 'row',
@@ -131,6 +145,7 @@ const styles = StyleSheet.create({
     marginEnd: 6,
     color: '#687991',
     fontSize: 12,
+    ...webTextAlignRight,
   },
   countRow: {
     flexDirection: 'row-reverse',
@@ -142,10 +157,12 @@ const styles = StyleSheet.create({
     color: '#304968',
     fontSize: 13,
     fontWeight: '700',
+    ...webTextAlignRight,
   },
   nextTierText: {
     color: '#75859a',
     fontSize: 12,
+    ...webTextAlignRight,
   },
   achievementTrack: {
     width: '100%',
@@ -158,6 +175,7 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 6,
     backgroundColor: '#348cb2',
+    ...Platform.select({ web: { alignSelf: 'flex-start' }, default: {} }),
   },
   pathCard: {
     padding: 18,
@@ -180,13 +198,15 @@ const styles = StyleSheet.create({
     color: '#0b3d91',
     fontSize: 19,
     fontWeight: '900',
-    direction: 'ltr'
+    ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
+    ...webTextAlignRight,
   },
   currentTitle: {
     marginTop: 5,
     color: '#2e7d32',
     fontSize: 15,
     fontWeight: '800',
+    ...webTextAlignRight,
   },
   pathTrack: {
     position: 'relative',
@@ -199,11 +219,12 @@ const styles = StyleSheet.create({
   milestoneConnector: {
     position: 'absolute',
     top: 28,
-    right: 14,
+    left: 14,
     width: 4,
     height: 56,
     borderRadius: 3,
     backgroundColor: '#d9dfe6',
+    ...Platform.select({ web: { right: 14 }, default: {} }),
   },
   milestoneConnectorFill: {
     width: '100%',
@@ -212,7 +233,7 @@ const styles = StyleSheet.create({
   },
   milestoneRow: {
     minHeight: 56,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     zIndex: 1,
   },
@@ -237,6 +258,7 @@ const styles = StyleSheet.create({
     color: '#8b96a5',
     fontSize: 12,
     fontWeight: '800',
+    ...webTextAlignRight,
   },
   milestoneInfo: {
     flex: 1,
@@ -246,27 +268,38 @@ const styles = StyleSheet.create({
     color: '#788596',
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'left',
+    direction: 'ltr',
+    ...webTextAlignRight,
   },
   milestoneNameUnlocked: {
     color: '#2e7d32',
+    textAlign: 'right',
   },
   milestonePoints: {
     marginTop: 3,
     color: '#929dab',
     fontSize: 12,
+    textAlign: 'left',
+    direction: 'ltr',
+    ...webTextAlignRight,
   },
   milestoneStatus: {
     minWidth: 48,
     color: '#939eab',
     fontSize: 11,
     fontWeight: '700',
+    textAlign: 'left',
+    direction: 'ltr',
+    ...webTextAlignRight,
   },
   pathHint: {
     marginTop: 13,
     color: '#63738f',
     fontSize: 13,
     lineHeight: 20,
-    alignSelf: 'center'
+    alignSelf: 'center',
+    ...webTextAlignRight,
   },
 })
 

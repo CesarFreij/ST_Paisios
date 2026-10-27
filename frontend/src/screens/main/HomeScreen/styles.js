@@ -1,4 +1,5 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     safeArea: {
@@ -7,7 +8,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        direction: 'ltr',
+        ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
         backgroundColor: '#348cb2',
     },
     icon: {
@@ -34,6 +35,7 @@ const styles = StyleSheet.create({
         fontSize: 40,
         fontWeight: 'bold',
         color: 'white',
+        ...webTextAlignRight,
     },
     homeUserSummary: {
         position: 'absolute',
@@ -54,6 +56,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '700',
+        ...webTextAlignRight,
     },
     dailyModalOverlay: {
         flex: 1,
@@ -116,6 +119,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1d4f91',
         marginBottom: 6,
+        ...webTextAlignRight,
     },
     dailyResultSubText: {
         fontSize: 16,
@@ -341,7 +345,7 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         paddingVertical: 15,
         paddingHorizontal: 18,
-        direction: 'ltr',
+        ...(Platform.OS !== 'web' ? { direction: 'ltr' } : {}),
         flexDirection: 'row',
         justifyContent: 'flex-start',
         alignItems: 'center',

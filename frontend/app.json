@@ -25,6 +25,13 @@
       "package": "com.cesarfreij.stpaisios"
     },
     "web": {
+      "bundler": "metro",
+      "name": "ST Paisios",
+      "shortName": "Paisios",
+      "display": "standalone",
+      "orientation": "portrait",
+      "backgroundColor": "#ffffff",
+      "themeColor": "#000000",
       "favicon": "./assets/icon.png"
     },
     "plugins": [

@@ -65,12 +65,19 @@ export default function Quiz() {
 
   return (
     <View style={styles.safeArea}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="chevron-right" size={20} color="#348cb2" />
           <Text style={styles.backText}>رجوع</Text>
         </TouchableOpacity>
         <Text style={styles.title}>{title}</Text>
+      </View> */}
+      <View style={styles.header}>
+          <Text style={styles.title}>نقاطي</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.backText}>رجوع</Text>
+              <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
+          </TouchableOpacity>
       </View>
 
       <View style={styles.card}>

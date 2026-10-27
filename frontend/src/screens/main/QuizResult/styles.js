@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -8,6 +9,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    ...Platform.select({ web: { flexDirection: 'row-reverse' }, default: {} }),
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 8,
@@ -15,18 +17,22 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flexDirection: 'row',
+    ...Platform.select({ web: { flexDirection: 'row', gap: 8 }, default: {} }),
     alignItems: 'center',
   },
   backText: {
     color: '#348cb2',
     fontSize: 16,
     marginStart: 8,
+    ...Platform.select({ web: { marginStart: 0 }, default: {} }),
     fontWeight: '600',
+    ...webTextAlignRight,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#0b3d91',
+    ...webTextAlignRight,
   },
   resultCard: {
     backgroundColor: '#ffffff',
@@ -43,10 +49,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6f7f96',
     marginBottom: 8,
+    ...webTextAlignRight,
   },
   resultValue: {
     fontSize: 24,
     fontWeight: '700',
+    ...webTextAlignRight,
     color: '#348cb2',
   },
   messageCard: {
@@ -65,6 +73,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1d4f91',
     lineHeight: 28,
+    ...webTextAlignRight,
   },
   noteText: {
     marginTop: 18,
@@ -85,6 +94,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+    ...webTextAlignRight,
   },
 });
 

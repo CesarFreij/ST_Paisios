@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Easing, View, Text, TouchableOpacity, Animated } from 'react-native';
+import { ActivityIndicator, Easing, Platform, View, Text, TouchableOpacity, Animated } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import api from '../../../api/apiClient';
@@ -273,7 +273,7 @@ export default function PointsScreen() {
                         <Text style={styles.title}>نقاطي</Text>
                         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                             <Text style={styles.backText}>رجوع</Text>
-                            <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+                            <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
                         </TouchableOpacity>
                     </View>
 

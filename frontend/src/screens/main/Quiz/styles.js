@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -7,6 +8,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
+    ...Platform.select({ web: { flexDirection: 'row-reverse' }, default: {} }),
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
@@ -15,18 +17,22 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flexDirection: 'row',
+    ...Platform.select({ web: { flexDirection: 'row', gap: 8 }, default: {} }),
     alignItems: 'center',
   },
   backText: {
     color: '#348cb2',
     fontSize: 16,
     marginStart: 8,
+    ...Platform.select({ web: { marginStart: 0 }, default: {} }),
     fontWeight: '600',
+    ...webTextAlignRight,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#0b3d91',
+    ...webTextAlignRight,
   },
   card: {
     flex: 1,
@@ -45,6 +51,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6f7f96',
     marginBottom: 10,
+    ...webTextAlignRight,
   },
   questionText: {
     fontSize: 22,
@@ -52,6 +59,7 @@ const styles = StyleSheet.create({
     color: '#1d4f91',
     marginBottom: 20,
     lineHeight: 32,
+    ...webTextAlignRight,
   },
   answerOption: {
     backgroundColor: '#f5f7fb',
@@ -68,10 +76,12 @@ const styles = StyleSheet.create({
   answerText: {
     fontSize: 16,
     color: '#213a71',
+    ...webTextAlignRight,
   },
   answerTextSelected: {
     fontWeight: '700',
     color: '#0b3d91',
+    ...webTextAlignRight,
   },
   footerButtons: {
     flexDirection: 'row',
@@ -96,6 +106,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
+    ...webTextAlignRight,
   },
 });
 

@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -15,18 +16,22 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flexDirection: 'row',
+    ...Platform.select({ web: { gap: 8 }, default: {} }),
     alignItems: 'center',
   },
   backText: {
     color: '#348cb2',
     fontSize: 16,
     marginStart: 8,
+    ...Platform.select({ web: { marginStart: 0 }, default: {} }),
     fontWeight: '600',
+    ...webTextAlignRight,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#0b3d91',
+    ...webTextAlignRight,
   },
   descriptionCard: {
     marginHorizontal: 20,
@@ -44,6 +49,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#4f6272',
+    ...webTextAlignRight,
   },
   examCard: {
     marginHorizontal: 20,
@@ -61,12 +67,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6f7f96',
     marginBottom: 8,
+    ...webTextAlignRight,
   },
   examTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: '#1d4f91',
     marginBottom: 18,
+    ...webTextAlignRight,
   },
   examStatsRow: {
     flexDirection: 'row',
@@ -81,11 +89,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6f7f96',
     marginBottom: 6,
+    ...webTextAlignRight,
   },
   statValue: {
     fontSize: 20,
     fontWeight: '700',
     color: '#348cb2',
+    ...webTextAlignRight,
   },
   startButton: {
     backgroundColor: '#348cb2',
@@ -101,6 +111,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+    ...webTextAlignRight,
   },
   disabledCard: {
     justifyContent: 'center',

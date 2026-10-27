@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { Alert, View, Image, Animated, Easing, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, Image, Animated, Easing, Text, Modal, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import styles from './styles';
 import CustomButton from '../../../components/CustomButton/CustomButton';
@@ -12,6 +12,7 @@ import { formatArabicPoints } from '../../../utils/formatArabicPoints';
 import { cacheKnownPoints, getKnownPointsCacheKey } from '../../../utils/pointBalanceCache';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserPoints } from '../../../context/UserPointsContext';
+import showAlert from '../../../utils/showAlert';
 
 const getCurrentLocalDate = () => {
     const dateParts = new Intl.DateTimeFormat('en-US', {
@@ -348,11 +349,11 @@ export default function HomeScreen() {
         };
 
         if (typeof questionId !== 'string' || !/^[a-f\d]{24}$/i.test(questionId)) {
-            Alert.alert('تعذر إرسال الإجابة', 'بيانات السؤال غير صالحة. يرجى تحديث الصفحة والمحاولة مجددًا.');
+            showAlert('تعذر إرسال الإجابة', 'بيانات السؤال غير صالحة. يرجى تحديث الصفحة والمحاولة مجددًا.');
             return;
         }
         if (!Number.isInteger(selectedOption) || selectedOption < 0) {
-            Alert.alert('تعذر إرسال الإجابة', 'يرجى اختيار إجابة صالحة.');
+            showAlert('تعذر إرسال الإجابة', 'يرجى اختيار إجابة صالحة.');
             return;
         }
 
@@ -362,7 +363,7 @@ export default function HomeScreen() {
         try {
             const token = await AsyncStorage.getItem('st_paisios_token');
             if (!token) {
-                Alert.alert('تعذر إرسال الإجابة', 'انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مجددًا.');
+                showAlert('تعذر إرسال الإجابة', 'انتهت صلاحية تسجيل الدخول. يرجى تسجيل الدخول مجددًا.');
                 return;
             }
 
@@ -403,7 +404,7 @@ export default function HomeScreen() {
             console.log("Submit Server Error:", error.response?.data);
             if (error.response?.data?.code === 'POINT_SETTINGS_CHANGED') {
                 await loadDailyQuestion(userId);
-                Alert.alert(
+                showAlert(
                     'تم تحديث مكافأة السؤال',
                     'تم تحميل قيمة المكافأة الجديدة. راجعها ثم أعد إرسال إجابتك.'
                 );
@@ -416,10 +417,10 @@ export default function HomeScreen() {
                 setShowDailyCompletion(true);
             } else if (!error.response) {
                 console.error('Failed to submit today’s daily question:', error);
-                Alert.alert('تعذر الاتصال', 'تحقق من اتصالك بالإنترنت ثم حاول مجددًا.');
+                showAlert('تعذر الاتصال', 'تحقق من اتصالك بالإنترنت ثم حاول مجددًا.');
             } else {
                 console.error('Failed to submit today’s daily question:', error);
-                Alert.alert(
+                showAlert(
                     'تعذر إرسال الإجابة',
                     error.response.data?.message || 'تعذر إرسال الإجابة. يرجى المحاولة مجددًا.'
                 );

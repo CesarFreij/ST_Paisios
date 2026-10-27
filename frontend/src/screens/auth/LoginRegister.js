@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, Alert, ActivityIndicator, Image } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, ActivityIndicator, Image } from 'react-native'
 import React, { useState, useRef } from 'react'
 import styles from './styles'
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import authService from '../../services/authService'
+import showAlert from '../../utils/showAlert'
 
 const { height } = Dimensions.get('window');
 
@@ -26,7 +27,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
     const handleLogin = async () => {
         if (!usernameLogin.trim() || !passwordLogin.trim()) {
             setLoginError('يرجى ملء جميع الحقول المطلوبة');
-            Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة');
+            showAlert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة');
             return;
         }
 
@@ -40,11 +41,11 @@ export default function LoginRegister({ isCheckingToken = false }) {
                 navigation.replace('Home')
             } else {
                 const msg = (res && res.message) || 'فشل تسجيل الدخول'
-                Alert.alert('خطأ', msg)
+                showAlert('خطأ', msg)
             }
         } catch (err) {
             const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
-            Alert.alert('خطأ', msg)
+            showAlert('خطأ', msg)
         } finally {
             setIsLoginLoading(false);
         }
@@ -52,7 +53,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
 
     const handleRegister = async () => {
         if (!usernameRegister.trim() || !passwordRegister || !confirmPasswordRegister) {
-            Alert.alert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
+            showAlert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
             return
         }
 
@@ -65,11 +66,11 @@ export default function LoginRegister({ isCheckingToken = false }) {
                 navigation.replace('Home')
             } else {
                 const msg = (res && res.message) || 'فشل التسجيل'
-                Alert.alert('خطأ', msg)
+                showAlert('خطأ', msg)
             }
         } catch (err) {
             const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
-            Alert.alert('خطأ', msg)
+            showAlert('خطأ', msg)
         } finally {
             setIsRegisterLoading(false)
         }

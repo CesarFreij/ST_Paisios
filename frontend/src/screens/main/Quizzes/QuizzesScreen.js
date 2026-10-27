@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, FlatList, Platform, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { FontAwesome5 } from '@expo/vector-icons'
 import api from '../../../api/apiClient'
@@ -185,7 +185,7 @@ export default function QuizzesScreen() {
     <>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="رجوع">
-          <FontAwesome5 name="chevron-left" size={17} color={colors.blue} />
+          <FontAwesome5 name={'chevron-left'} size={20} color={colors.blue} />
           <Text style={styles.backText}>رجوع</Text>
         </TouchableOpacity>
         <Text style={styles.pageTitle}>الاختبارات الأسبوعية</Text>
@@ -280,36 +280,36 @@ const styles = {
   content: { paddingHorizontal: 18, paddingBottom: 28 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingBottom: 18 },
-  pageTitle: { color: colors.dark, fontSize: 23, fontWeight: '800', textAlign: 'left' },
+  pageTitle: { color: '#0b3d91', fontSize: 25, fontWeight: 'bold', textAlign: 'left', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   backButton: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, padding: 8 },
-  backText: { color: colors.blue, fontSize: 15, fontWeight: '700' },
+  backText: { color: colors.blue, fontSize: 16, fontWeight: '600', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   quizCard: { backgroundColor: colors.card, borderRadius: 22, padding: 20, marginBottom: 24, elevation: 4 },
   quizIcon: { alignSelf: 'flex-start', width: 44, height: 44, borderRadius: 14, backgroundColor: '#eaf6fb', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  quizTitle: { color: colors.dark, fontSize: 21, fontWeight: '800', textAlign: 'left' },
-  description: { color: colors.muted, fontSize: 14, lineHeight: 22, textAlign: 'left', marginTop: 8 },
-  quizStats: { flexDirection: 'row-reverse', justifyContent: 'space-between', flexWrap: 'wrap', marginTop: 16, gap: 8 },
-  statText: { color: colors.muted, fontSize: 13, fontWeight: '700', textAlign: 'left' },
+  quizTitle: { color: colors.dark, fontSize: 21, fontWeight: '800', textAlign: 'left', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  description: { color: colors.muted, fontSize: 14, lineHeight: 22, textAlign: 'left', marginTop: 8, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  quizStats: { flexDirection: 'row-reverse', ...Platform.select({ web: { flexDirection: 'row' }, default: {} }), justifyContent: 'space-between', flexWrap: 'wrap', marginTop: 16, gap: 8 },
+  statText: { color: colors.muted, fontSize: 13, fontWeight: '700', textAlign: 'left', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   availability: { color: colors.amber, backgroundColor: '#fff6e5', borderRadius: 12, overflow: 'hidden', padding: 12, marginTop: 16, textAlign: 'center', fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
   available: { color: colors.green, backgroundColor: '#e9f7ef' },
-  windowText: { color: colors.muted, marginTop: 8, textAlign: 'left', fontSize: 12 },
+  windowText: { color: colors.muted, marginTop: 8, textAlign: 'left', fontSize: 12, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   startButton: { marginTop: 18, backgroundColor: colors.blue, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   disabledButton: { backgroundColor: '#aab9c4' },
   startButtonText: { color: '#ffffff', fontWeight: '800', fontSize: 15, textAlign: 'center' },
   emptyCard: { backgroundColor: colors.card, borderRadius: 22, padding: 28, alignItems: 'center', gap: 12, marginBottom: 24 },
   emptyText: { color: colors.muted, fontSize: 15, fontWeight: '700', textAlign: 'center' },
-  sectionTitle: { color: colors.dark, fontSize: 19, fontWeight: '800', textAlign: 'left', marginBottom: 12 },
+  sectionTitle: { color: colors.dark, fontSize: 19, fontWeight: '800', textAlign: 'left', marginBottom: 12, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   emptyHistory: { color: colors.muted, textAlign: 'center', padding: 18 },
   historyCard: { backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 10, elevation: 2 },
-  historyTop: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  historyTitle: { color: colors.dark, fontSize: 15, fontWeight: '800', textAlign: 'left', flex: 1 },
-  statusBadge: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 5, overflow: 'hidden', fontSize: 11, fontWeight: '800' },
+  historyTop: { flexDirection: 'row-reverse', ...Platform.select({ web: { flexDirection: 'row' }, default: {} }), alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  historyTitle: { color: colors.dark, fontSize: 15, fontWeight: '800', textAlign: 'left', flex: 1, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  statusBadge: { borderRadius: 10, paddingHorizontal: 9, paddingVertical: 5, overflow: 'hidden', fontSize: 11, fontWeight: '800', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   completedBadge: { color: colors.green, backgroundColor: '#e9f7ef' },
   timedOutBadge: { color: colors.red, backgroundColor: '#fff0ef' },
-  historyMeta: { color: colors.muted, textAlign: 'left', fontSize: 12, marginTop: 8 },
-  historyScore: { color: colors.blue, textAlign: 'left', fontSize: 15, fontWeight: '800', marginTop: 8, fontVariant: ['tabular-nums'] },
-  historyQuestionCount: { color: colors.muted, fontSize: 12, fontWeight: '500' },
+  historyMeta: { color: colors.muted, textAlign: 'left', fontSize: 12, marginTop: 8, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  historyScore: { color: colors.blue, textAlign: 'left', fontSize: 15, fontWeight: '800', marginTop: 8, fontVariant: ['tabular-nums'], ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  historyQuestionCount: { color: colors.muted, fontSize: 12, fontWeight: '500', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   listFooter: { paddingVertical: 18 },
   errorBox: { padding: 16, backgroundColor: '#fff0ef' },
-  errorText: { color: colors.red, textAlign: 'left', lineHeight: 22 },
-  retryButton: { alignSelf: 'flex-end', backgroundColor: colors.blue, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16, marginTop: 10 },
+  errorText: { color: colors.red, textAlign: 'left', lineHeight: 22, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  retryButton: { alignSelf: 'flex-end', ...Platform.select({ web: { alignSelf: 'flex-start' }, default: {} }), backgroundColor: colors.blue, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16, marginTop: 10 },
 }

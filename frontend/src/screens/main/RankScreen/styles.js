@@ -1,10 +1,11 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#f0f8ff',
-        direction: 'rtl',
+        ...(Platform.OS !== 'web' ? { direction: 'rtl' } : {}),
     },
     header: {
         flexDirection: 'row',
@@ -16,6 +17,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 8 }, default: {} }),
         alignItems: 'center',
     },
     backText: {
@@ -23,11 +25,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginEnd: 8,
         fontWeight: '600',
+        ...webTextAlignRight,
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
         color: '#0b3d91',
+        ...webTextAlignRight,
     },
     currentRankCard: {
         marginHorizontal: 20,
@@ -46,9 +50,11 @@ const styles = StyleSheet.create({
         color: '#6f7f96',
         marginBottom: 15,
         textAlign: 'left',
+        ...webTextAlignRight,
     },
     currentRankInfo: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 12 }, default: {} }),
         alignItems: 'center',
     },
     rankBadge: {
@@ -58,11 +64,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginEnd: 15,
+        ...Platform.select({ web: { marginEnd: 0 }, default: {} }),
     },
     currentRankNumber: {
         fontSize: 16,
         fontWeight: 'bold',
         color: 'white',
+        ...webTextAlignRight,
     },
     currentUserDetails: {
         flex: 1,
@@ -73,6 +81,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1d4f91',
         marginBottom: 5,
+        ...webTextAlignRight,
     },
     currentUserPoints: {
         fontSize: 18,
@@ -88,6 +97,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#213a71',
         textAlign: 'left',
+        ...webTextAlignRight,
     },
     list: {
         paddingHorizontal: 20,
@@ -114,6 +124,7 @@ const styles = StyleSheet.create({
     },
     rankInfo: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 12 }, default: {} }),
         alignItems: 'center',
         flex: 1,
     },
@@ -122,10 +133,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         marginTop: 2,
+        ...webTextAlignRight,
     },
     userInfo: {
         flex: 1,
-        marginStart: 15,
+        marginEnd: 15,
+        ...Platform.select({ web: { marginEnd: 0 }, default: {} }),
     },
     userNameRow: {
         flexDirection: 'row',
@@ -141,11 +154,15 @@ const styles = StyleSheet.create({
     },
     currentUserName: {
         color: '#348cb2',
+        ...webTextAlignRight,
+        fontWeight: 'bold',
+        fontSize: 18,
     },
     currentUserLabel: {
         fontSize: 14,
         color: '#348cb2',
         fontWeight: '600',
+        ...webTextAlignRight,
     },
     roleBadge: {
         borderRadius: 999,
@@ -155,6 +172,7 @@ const styles = StyleSheet.create({
     roleBadgeText: {
         fontSize: 11,
         fontWeight: '700',
+        ...webTextAlignRight,
     },
     ownerRoleBadge: {
         backgroundColor: '#fff1c2',
@@ -174,6 +192,7 @@ const styles = StyleSheet.create({
         color: '#348cb2',
         fontFamily: 'sans-serif',
         textAlign: 'left',
+        ...webTextAlignRight,
     },
     errorState: {
         flex: 1,
@@ -200,6 +219,7 @@ const styles = StyleSheet.create({
     retryButtonText: {
         color: '#fff',
         fontWeight: '700',
+        ...webTextAlignRight,
     },
     emptyText: {
         paddingVertical: 28,

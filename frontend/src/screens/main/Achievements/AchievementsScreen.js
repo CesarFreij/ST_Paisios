@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Animated, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
@@ -186,7 +186,7 @@ export default function AchievementsScreen() {
             accessibilityRole="button"
             accessibilityLabel="رجوع"
           >
-            <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+            <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
             <Text style={[styles.backText, textStyles]}>رجوع</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
@@ -208,7 +208,7 @@ export default function AchievementsScreen() {
             accessibilityRole="button"
             accessibilityLabel="رجوع"
           >
-            <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+            <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
             <Text style={[styles.backText, textStyles]}>رجوع</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
@@ -236,7 +236,7 @@ export default function AchievementsScreen() {
           accessibilityRole="button"
           accessibilityLabel="رجوع"
         >
-          <FontAwesome5 name="chevron-left" size={20} color="#348cb2" />
+          <FontAwesome5 name={'chevron-left'} size={20} color="#348cb2" />
           <Text style={[styles.backText, textStyles]}>رجوع</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, textStyles]}>الإنجازات والألقاب</Text>
@@ -245,7 +245,12 @@ export default function AchievementsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeading}>
           <Text style={[styles.sectionTitle, textStyles]}>الإنجازات</Text>
-          <FontAwesome5 name="medal" size={19} color="#d69e16" style={{marginRight: 'auto'}}/>
+          <FontAwesome5
+            name="medal"
+            size={19}
+            color="#d69e16"
+            style={Platform.OS === 'web' ? styles.webSectionIcon : { marginRight: 'auto' }}
+          />
         </View>
 
         {achievementCards.map((item) => {
@@ -323,7 +328,12 @@ export default function AchievementsScreen() {
 
         <View style={styles.sectionHeading}>
           <Text style={[styles.sectionTitle, textStyles]}>المسار السنوي</Text>
-          <FontAwesome5 name="trophy" size={19} color="#d69e16" />
+          <FontAwesome5
+            name="trophy"
+            size={19}
+            color="#d69e16"
+            style={Platform.OS === 'web' ? styles.webSectionIcon : undefined}
+          />
         </View>
 
         <View style={styles.pathCard}>

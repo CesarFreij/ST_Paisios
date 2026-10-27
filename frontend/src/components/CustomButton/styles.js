@@ -1,4 +1,5 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     container: {
@@ -11,6 +12,7 @@ const styles = StyleSheet.create({
         transform: [{ translateY: '50%' }, { translateX: '-50%' }],
         zIndex: 2,
         flexDirection: 'row',
+        ...Platform.select({ web: { flexDirection: 'row-reverse' }, default: {} }),
         flexWrap: 'wrap',
         gap: 20,
         paddingHorizontal: 15,
@@ -80,6 +82,7 @@ const styles = StyleSheet.create({
     modalActions: {
         width: '100%',
         flexDirection: 'row',
+        ...Platform.select({ web: { flexDirection: 'row-reverse' }, default: {} }),
         justifyContent: 'space-between',
     },
 
@@ -103,6 +106,7 @@ const styles = StyleSheet.create({
     modalButtonText: {
         color: '#fff',
         fontWeight: '700',
+        ...webTextAlignRight,
     }
 });
 

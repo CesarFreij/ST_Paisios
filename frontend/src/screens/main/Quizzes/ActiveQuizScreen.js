@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   BackHandler,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -208,7 +209,7 @@ export default function ActiveQuizScreen() {
           style={styles.backButton}
           disabled={isSubmitting}
         >
-          <FontAwesome5 name="chevron-left" size={16} color={palette.blue} />
+          <FontAwesome5 name={Platform.OS === 'web' ? 'chevron-right' : 'chevron-left'} size={16} color={palette.blue} />
           <Text style={styles.backText}>الاختبارات</Text>
         </TouchableOpacity>
         <View style={styles.timerWrap}>
@@ -308,33 +309,33 @@ export default function ActiveQuizScreen() {
 const styles = {
   safeArea: { flex: 1, backgroundColor: palette.background },
   stickyHeader: { minHeight: 58, paddingHorizontal: 18, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', backgroundColor: palette.white, elevation: 5, zIndex: 2 },
-  backButton: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, paddingVertical: 10 },
-  backText: { color: palette.blue, fontWeight: '700' },
+  backButton: { flexDirection: 'row-reverse', ...Platform.select({ web: { flexDirection: 'row' }, default: {} }), alignItems: 'center', gap: 8, paddingVertical: 10 },
+  backText: { color: palette.blue, fontWeight: '700', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   timerWrap: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 13, paddingVertical: 8, backgroundColor: '#edf6fa', borderRadius: 12 },
   timer: { color: palette.blue, fontSize: 18, fontWeight: '900', fontVariant: ['tabular-nums'] },
   timerWarning: { color: palette.red },
   content: { padding: 18, paddingBottom: 36 },
-  title: { color: palette.dark, fontSize: 23, fontWeight: '900', textAlign: 'left', marginTop: 8 },
-  instructions: { color: palette.muted, fontSize: 14, lineHeight: 22, textAlign: 'left', marginTop: 8, marginBottom: 18 },
+  title: { color: palette.dark, fontSize: 23, fontWeight: '900', textAlign: 'left', marginTop: 8, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  instructions: { color: palette.muted, fontSize: 14, lineHeight: 22, textAlign: 'left', marginTop: 8, marginBottom: 18, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   questionCard: { backgroundColor: palette.white, borderRadius: 18, padding: 17, marginBottom: 14, elevation: 2 },
-  questionMeta: { flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: 12 },
-  questionNumber: { color: palette.blue, fontSize: 12, fontWeight: '800' },
-  points: { color: palette.muted, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  questionText: { color: palette.dark, fontSize: 17, fontWeight: '800', textAlign: 'left', lineHeight: 26, marginBottom: 14 },
-  option: { minHeight: 48, flexDirection: 'row-reverse', alignItems: 'center', gap: 11, borderWidth: 1, borderColor: '#dce8ee', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
+  questionMeta: { flexDirection: 'row-reverse', ...Platform.select({ web: { flexDirection: 'row' }, default: {} }), justifyContent: 'space-between', marginBottom: 12 },
+  questionNumber: { color: palette.blue, fontSize: 12, fontWeight: '800', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  points: { color: palette.muted, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'], ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  questionText: { color: palette.dark, fontSize: 17, fontWeight: '800', textAlign: 'left', lineHeight: 26, marginBottom: 14, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  option: { minHeight: 48, flexDirection: 'row-reverse', ...Platform.select({ web: { flexDirection: 'row' }, default: {} }), alignItems: 'center', gap: 11, borderWidth: 1, borderColor: '#dce8ee', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, marginTop: 8 },
   optionSelected: { borderColor: palette.blue, backgroundColor: '#edf8fc' },
   optionLocked: { opacity: 0.72 },
   optionRadio: { width: 20, height: 20, borderWidth: 2, borderColor: '#93a7b4', borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   optionRadioSelected: { borderColor: palette.blue },
   optionRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: palette.blue },
-  optionText: { color: palette.dark, fontSize: 15, textAlign: 'left', flex: 1 },
-  optionTextSelected: { color: palette.blue, fontWeight: '800' },
+  optionText: { color: palette.dark, fontSize: 15, textAlign: 'left', flex: 1, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  optionTextSelected: { color: palette.blue, fontWeight: '800', ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
   primaryButton: { minHeight: 50, backgroundColor: palette.blue, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 13, marginTop: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   buttonDisabled: { backgroundColor: '#95adba' },
   primaryButtonText: { color: palette.white, textAlign: 'center', fontWeight: '800', fontSize: 15 },
   errorBox: { backgroundColor: '#fff0ef', borderRadius: 14, padding: 14, marginTop: 8 },
-  errorText: { color: palette.red, textAlign: 'left', lineHeight: 21 },
-  retryButton: { alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.blue, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9, marginTop: 10 },
+  errorText: { color: palette.red, textAlign: 'left', lineHeight: 21, ...Platform.select({ web: { textAlign: 'right' }, default: {} }) },
+  retryButton: { alignSelf: 'flex-end', ...Platform.select({ web: { alignSelf: 'flex-start' }, default: {} }), flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: palette.blue, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9, marginTop: 10 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(8,24,39,0.58)', alignItems: 'center', justifyContent: 'center', padding: 22 },
   resultModal: { width: '100%', maxWidth: 420, backgroundColor: palette.white, borderRadius: 24, padding: 26, alignItems: 'center' },

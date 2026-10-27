@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     body: {
@@ -50,6 +51,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         paddingStart: 20,
         paddingEnd: 50,
+        ...webTextAlignRight,
     },
     button: {
         backgroundColor: 'rgb(116, 148, 236)',
@@ -62,6 +64,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
+        ...webTextAlignRight,
     },
     errorText: {
         color: '#c62828',
@@ -118,7 +121,8 @@ const styles = StyleSheet.create({
     toggleTextButton: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        ...webTextAlignRight,
     },
     before: {
         position: 'absolute',

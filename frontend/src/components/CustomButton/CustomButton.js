@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
-import { Alert, View, Text, Modal, TouchableOpacity } from 'react-native'
+import { View, Text, Modal, TouchableOpacity } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import styles from './styles'
 import { FontAwesome5 } from '@expo/vector-icons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import api from '../../api/apiClient';
 import { formatArabicPoints } from '../../utils/formatArabicPoints';
+import showAlert from '../../utils/showAlert';
 
 const progressFieldByAction = {
     'الصلاة': 'prayerCount',
@@ -122,7 +123,7 @@ export default function CustomButton({
             .catch((error) => {
                 if (active) {
                     console.error('Failed to load action points:', error);
-                    Alert.alert(
+                    showAlert(
                         'تعذر تحميل إعدادات النقاط',
                         error.response?.data?.message || error.message || 'تحقق من اتصال الشبكة ثم أعد المحاولة.'
                     );
@@ -137,7 +138,7 @@ export default function CustomButton({
 
     const openConfirm = (label, action) => {
         if (!pointSettingsLoaded) {
-            Alert.alert('إعدادات النقاط غير جاهزة', 'أعد فتح الشاشة بعد تحميل إعدادات النقاط من الخادم.');
+            showAlert('إعدادات النقاط غير جاهزة', 'أعد فتح الشاشة بعد تحميل إعدادات النقاط من الخادم.');
             return;
         }
         setSelectedTodo(label);
@@ -149,7 +150,7 @@ export default function CustomButton({
     const handleAddPoints = async () => {
         if (requestInFlight.current) return;
         if (!selectedCounter) {
-            Alert.alert('تعذر حفظ التقدم', 'هذا النشاط غير مرتبط بحقل تقدم في الخادم.');
+            showAlert('تعذر حفظ التقدم', 'هذا النشاط غير مرتبط بحقل تقدم في الخادم.');
             return;
         }
 
@@ -217,7 +218,7 @@ export default function CustomButton({
                     onSnackbar?.('warning', 'تم تحديث إعدادات النقاط. أعد المحاولة بالقيمة الجديدة.');
                 } catch (settingsError) {
                     console.error('Failed to refresh action point settings:', settingsError);
-                    Alert.alert(
+                    showAlert(
                         'تعذر تحديث إعدادات النقاط',
                         settingsError.response?.data?.message || 'تحقق من اتصال الشبكة ثم أعد فتح الشاشة.'
                     );

@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { webTextAlignRight } from '../../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     safeArea: {
@@ -15,6 +16,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 8 }, default: {} }),
         alignItems: 'center',
     },
     backText: {
@@ -22,11 +24,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginEnd: 8,
         fontWeight: '600',
+        ...webTextAlignRight,
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
         color: '#0b3d91',
+        ...webTextAlignRight,
     },
     content: {
         paddingHorizontal: 20,
@@ -53,15 +57,18 @@ const styles = StyleSheet.create({
         color: '#e8f3ff',
         fontSize: 16,
         fontWeight: '700',
+        ...webTextAlignRight,
     },
     userName: {
         color: '#ffffff',
         fontSize: 24,
         fontWeight: '800',
         marginBottom: 18,
+        ...webTextAlignRight,
     },
     summaryRow: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 10 }, default: {} }),
         justifyContent: 'space-between',
     },
     summaryItem: {
@@ -70,6 +77,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 10,
         marginStart: 10,
+        ...Platform.select({ web: { marginStart: 0 }, default: {} }),
     },
     summaryLabel: {
         color: '#dbe8ff',
@@ -100,12 +108,14 @@ const styles = StyleSheet.create({
         color: '#0b3d91',
         marginBottom: 18,
         textAlign: 'left',
+        ...Platform.select({ web: { textAlign: 'right' }, default: {} }),
     },
     detailItem: {
         marginBottom: 18,
     },
     detailHeader: {
         flexDirection: 'row',
+        ...Platform.select({ web: { flexDirection: 'row', gap: 8 }, default: {} }),
         justifyContent: 'space-between',
         alignItems: 'flex-end',
         marginBottom: 10,
@@ -117,6 +127,7 @@ const styles = StyleSheet.create({
         flex: 1,
         textAlign: 'left',
         writingDirection: 'rtl',
+        ...Platform.select({ web: { textAlign: 'right' }, default: {} }),
     },
     detailPoints: {
         fontSize: 16,
@@ -124,6 +135,7 @@ const styles = StyleSheet.create({
         color: '#348cb2',
         textAlign: 'right',
         writingDirection: 'rtl',
+        ...webTextAlignRight,
     },
     detailMeta: {
         flexDirection: 'row',
@@ -138,6 +150,7 @@ const styles = StyleSheet.create({
     },
     statsRow: {
         flexDirection: 'row',
+        ...Platform.select({ web: { gap: 10 }, default: {} }),
         justifyContent: 'space-between',
         marginBottom: 14,
     },
@@ -149,16 +162,21 @@ const styles = StyleSheet.create({
         minHeight: 110,
         justifyContent: 'space-between',
         marginStart: 10,
+        ...Platform.select({ web: { marginEnd: 0 }, default: {} }),
     },
     statsLabel: {
         color: '#63738f',
         fontSize: 14,
         marginBottom: 8,
+        ...webTextAlignRight,
     },
     statsValue: {
         color: '#1d4f91',
         fontSize: 18,
         fontWeight: '800',
+        textAlign: 'left',
+        writingDirection: 'rtl',
+        ...webTextAlignRight,
     },
     calendarGrid: {
         flexDirection: 'column',
@@ -177,6 +195,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         textAlign: 'left',
         writingDirection: 'rtl',
+        ...Platform.select({ web: { textAlign: 'right' }, default: {} }),
         lineHeight: 22,
     },
     calendarCard: {
@@ -190,11 +209,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#162d50',
         marginBottom: 6,
+        ...webTextAlignRight,
     },
     calendarMonth: {
         color: '#63738f',
         fontSize: 14,
         marginBottom: 14,
+        ...webTextAlignRight,
     },
     calendarDays: {
         flexDirection: 'row',
@@ -220,6 +241,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         color: '#213a71',
+        ...webTextAlignRight,
     },
     calendarFooter: {
         flexDirection: 'row',
@@ -230,6 +252,7 @@ const styles = StyleSheet.create({
         color: '#4f637d',
         fontSize: 14,
         fontWeight: '700',
+        ...webTextAlignRight,
     },
     commitmentStatsRow: {
         flexDirection: 'row',
@@ -248,11 +271,15 @@ const styles = StyleSheet.create({
         color: '#63738f',
         fontSize: 13,
         marginBottom: 6,
+        ...webTextAlignRight,
     },
     commitmentValue: {
         color: '#0b3d91',
         fontSize: 18,
         fontWeight: '800',
+        textAlign: 'left',
+        writingDirection: 'rtl',
+        ...webTextAlignRight,
     },
     progressContainer: {
         marginTop: 8,
@@ -267,6 +294,7 @@ const styles = StyleSheet.create({
         height: '100%',
         backgroundColor: '#348cb2',
         borderRadius: 12,
+        ...Platform.select({ web: { alignSelf: 'flex-start' }, default: {} }),
     },
     progressGlow: {
         position: 'absolute',
@@ -283,6 +311,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         textAlign: 'right',
+        ...webTextAlignRight,
     },
 });
 

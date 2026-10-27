@@ -1,4 +1,5 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../utils/webRtlStyles'
 
 const styles = StyleSheet.create({
     // Settings Styles
@@ -22,9 +23,11 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         paddingTop: 20,
         maxHeight: '70%',
+        ...Platform.select({ web: { width: '100%', alignSelf: 'stretch' }, default: {} }),
     },
     modalHeader: {
         flexDirection: 'row',
+        ...Platform.select({ web: { flexDirection: 'row', gap: 8 }, default: {} }),
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
@@ -38,12 +41,14 @@ const styles = StyleSheet.create({
         color: '#348cb2',
         textAlign: 'center',
         flex: 1,
+        ...Platform.select({ web: { textAlign: 'right' }, default: {} }),
     },
     modalBody: {
         padding: 20,
     },
     menuItem: {
         flexDirection: 'row-reverse',
+        ...Platform.select({ web: { flexDirection: 'row', gap: 8 }, default: {} }),
         alignItems: 'center',
         paddingVertical: 16,
         paddingHorizontal: 15,
@@ -56,6 +61,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#333',
         marginRight: 15,
+        ...Platform.select({ web: { marginRight: 0 }, default: {} }),
         flex: 1,
         textAlign: 'right',
         writingDirection: 'rtl',
@@ -65,6 +71,7 @@ const styles = StyleSheet.create({
         minWidth: 76,
         alignItems: 'flex-start',
         justifyContent: 'center',
+        ...Platform.select({ web: { alignItems: 'flex-end', justifyContent: 'center' }, default: {} }),
     },
     pointsValue: {
         fontSize: 16,
@@ -77,6 +84,7 @@ const styles = StyleSheet.create({
         maxWidth: '100%',
         textAlign: 'left',
         writingDirection: 'rtl',
+        ...Platform.select({ web: { textAlign: 'right' }, default: {} }),
     },
     logoutItem: {
         backgroundColor: '#ffebee',
@@ -86,6 +94,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#e74c3c',
         marginRight: 15,
+        ...Platform.select({ web: { marginRight: 0 }, default: {} }),
+        ...webTextAlignRight,
     }
 });
 
