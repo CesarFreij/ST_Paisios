@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Animated, ActivityIndicator, Image } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Animated, ActivityIndicator, Image, Keyboard, Platform } from 'react-native'
 import React, { useState, useRef } from 'react'
 import styles from './styles'
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import authService from '../../services/authService'
 import showAlert from '../../utils/showAlert'
 
 const { height } = Dimensions.get('window');
+const DismissKeyboardView = Platform.OS === 'web' ? View : TouchableWithoutFeedback;
 
 export default function LoginRegister({ isCheckingToken = false }) {
     const navigation = useNavigation();
@@ -134,12 +135,16 @@ export default function LoginRegister({ isCheckingToken = false }) {
     };
 
     return (
-        <LinearGradient
-            colors={['#e2e2e2', '#c9d6ff']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.body}
+        <DismissKeyboardView
+            onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}
+            style={{ flex: 1 }}
         >
+          <LinearGradient
+              colors={['#e2e2e2', '#c9d6ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.body}
+          >
             <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <KeyboardAwareScrollView
                     contentContainerStyle={{
@@ -149,7 +154,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                        <Animated.View style={[styles.formBox, { height: formBoxHeight }]}> 
+                        <Animated.View style={[styles.formBox, { height: formBoxHeight }]}>
                             <View style={styles.form}>
                                 {showLogin ? (
                                     <>
@@ -284,8 +289,8 @@ export default function LoginRegister({ isCheckingToken = false }) {
                                 )}
                             </View>
                         </Animated.View>
-                        <View style={styles.toggleBox}>
-                            <Animated.View style={[styles.before, { top: beforeTop }]} />
+                        <View style={styles.toggleBox} pointerEvents="box-none">
+                            <Animated.View style={[styles.before, { top: beforeTop }]} pointerEvents="none" />
                             <Animated.View style={[styles.togglePanel, { top: togglePanelTop } ]}> 
                                 <Text style={styles.toggletitle}>فرقة القديس باييسيوس الآثوسي</Text>
                                 <Text style={styles.toggleParagraph}>الصف الثامن</Text>
@@ -303,6 +308,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
                         </View>
                 </KeyboardAwareScrollView>
             </ScrollView>
-        </LinearGradient>
+          </LinearGradient>
+        </DismissKeyboardView>
     )
 }

@@ -9,18 +9,29 @@ import Quiz from './src/screens/main/Quiz/Quiz';
 import QuizResult from './src/screens/main/QuizResult/QuizResult';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar, View } from 'react-native';
+import { Platform, StatusBar, View } from 'react-native';
 import LoginRegister from './src/screens/auth/LoginRegister';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import OfflineBanner from './src/components/OfflineBanner/OfflineBanner';
 import authService from './src/services/authService';
 import { UserPointsProvider } from './src/context/UserPointsContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFonts } from 'expo-font';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef();
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts(Platform.OS === 'web' ? {
+    ...FontAwesome.font,
+    ...FontAwesome5.font,
+    ...FontAwesome6.font,
+    ...Ionicons.font,
+  } : {});
   const [isCheckingToken, setIsCheckingToken] = useState(true);
   const shouldNavigateToHome = useRef(false);
 
@@ -58,6 +69,13 @@ export default function App() {
       isMounted = false;
     };
   }, [navigateToHomeIfReady]);
+
+  if (fontError) {
+    throw fontError;
+  }
+  if (Platform.OS === 'web' && !fontsLoaded) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider style={{ flex: 1 }}>

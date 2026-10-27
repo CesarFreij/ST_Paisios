@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         position: 'absolute',
+        zIndex: 1,
     },
     form: {
         padding: 20,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
         start: 0,
         backgroundColor: 'rgb(116, 148, 236)',
         borderRadius: 75,
-        zIndex: 2
+        zIndex: 0
     },
 
     // Register Section
