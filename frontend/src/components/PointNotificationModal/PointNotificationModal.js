@@ -3,6 +3,7 @@ import {
     Animated,
     Easing,
     Modal,
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -38,13 +39,13 @@ export default function PointNotificationModal({ visible, points, onClose }) {
                 toValue: 1,
                 duration: 220,
                 easing: Easing.out(Easing.quad),
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
             Animated.spring(scale, {
                 toValue: 1,
                 friction: 7,
                 tension: 70,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
         ]).start();
 
@@ -56,17 +57,17 @@ export default function PointNotificationModal({ visible, points, onClose }) {
                     toValue: 1,
                     duration: 1500,
                     easing: Easing.out(Easing.quad),
-                    useNativeDriver: true,
+                    useNativeDriver: Platform.OS !== 'web',
                 }))
             ).start();
         } else {
             shake.setValue(0);
             Animated.sequence([
-                Animated.timing(shake, { toValue: 1, duration: 55, useNativeDriver: true }),
-                Animated.timing(shake, { toValue: -1, duration: 75, useNativeDriver: true }),
-                Animated.timing(shake, { toValue: 0.7, duration: 65, useNativeDriver: true }),
-                Animated.timing(shake, { toValue: -0.7, duration: 65, useNativeDriver: true }),
-                Animated.timing(shake, { toValue: 0, duration: 55, useNativeDriver: true }),
+                Animated.timing(shake, { toValue: 1, duration: 55, useNativeDriver: Platform.OS !== 'web' }),
+                Animated.timing(shake, { toValue: -1, duration: 75, useNativeDriver: Platform.OS !== 'web' }),
+                Animated.timing(shake, { toValue: 0.7, duration: 65, useNativeDriver: Platform.OS !== 'web' }),
+                Animated.timing(shake, { toValue: -0.7, duration: 65, useNativeDriver: Platform.OS !== 'web' }),
+                Animated.timing(shake, { toValue: 0, duration: 55, useNativeDriver: Platform.OS !== 'web' }),
             ]).start();
         }
 
@@ -85,12 +86,12 @@ export default function PointNotificationModal({ visible, points, onClose }) {
             Animated.timing(opacity, {
                 toValue: 0,
                 duration: 160,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
             Animated.timing(scale, {
                 toValue: 0.92,
                 duration: 160,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
         ]).start(({ finished }) => {
             if (finished) onClose();
@@ -111,7 +112,7 @@ export default function PointNotificationModal({ visible, points, onClose }) {
         >
             <View style={styles.overlay}>
                 {isPositive && (
-                    <View pointerEvents="none" style={styles.confettiLayer}>
+                    <View style={styles.confettiLayer}>
                         {CONFETTI_PARTICLES.map((particle, index) => {
                             const progress = confetti[index];
                             return (
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
     confettiLayer: {
         ...StyleSheet.absoluteFillObject,
         overflow: 'hidden',
+        pointerEvents: 'none',
     },
     confettiParticle: {
         position: 'absolute',

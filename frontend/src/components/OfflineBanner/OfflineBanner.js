@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text } from 'react-native';
+import { Animated, Platform, StyleSheet, Text } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,7 +15,7 @@ export default function OfflineBanner() {
             Animated.timing(translateY, {
                 toValue: offline ? 0 : -56,
                 duration: 220,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }).start();
         });
 
@@ -31,7 +31,6 @@ export default function OfflineBanner() {
             accessibilityRole="alert"
             accessibilityElementsHidden={false}
             importantForAccessibility="yes"
-            pointerEvents="none"
             style={[
                 styles.banner,
                 { top: insets.top, transform: [{ translateY }] },
@@ -49,6 +48,7 @@ const styles = StyleSheet.create({
         end: 12,
         zIndex: 1000,
         elevation: 20,
+        pointerEvents: 'none',
         borderRadius: 10,
         backgroundColor: '#b42318',
         paddingVertical: 10,

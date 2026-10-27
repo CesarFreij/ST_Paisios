@@ -9,7 +9,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.body.dir = 'rtl';
 
   const rtlStyle = document.createElement('style');
-  rtlStyle.textContent = 'html, body, #root { direction: rtl !important; }';
+  rtlStyle.textContent = 'html, body, #root { direction: rtl !important; overscroll-behavior: none !important; -webkit-overflow-scrolling: auto; }';
   document.head.appendChild(rtlStyle);
 
   const setMetaTag = (name, content) => {
@@ -22,6 +22,10 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     meta.content = content;
   };
 
+  setMetaTag(
+    'viewport',
+    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+  );
   setMetaTag('apple-mobile-web-app-capable', 'yes');
   setMetaTag('apple-mobile-web-app-title', 'ST Paisios');
   setMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent');

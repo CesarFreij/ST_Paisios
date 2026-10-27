@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Animated, Easing, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Animated, Easing, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { formatArabicPoints } from '../../utils/formatArabicPoints'
 
 const confettiColors = ['#10b981', '#38bdf8', '#53b6a8', '#7c6ee6', '#e85d75', '#86efac']
@@ -27,13 +27,13 @@ export default function AchievementUnlockedModal({ achievements, onClose }) {
                 toValue: 1,
                 duration: 220,
                 easing: Easing.out(Easing.quad),
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
             Animated.spring(scale, {
                 toValue: 1,
                 friction: 7,
                 tension: 70,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
             Animated.stagger(
                 30,
@@ -41,7 +41,7 @@ export default function AchievementUnlockedModal({ achievements, onClose }) {
                     toValue: 1,
                     duration: 1400,
                     easing: Easing.out(Easing.quad),
-                    useNativeDriver: true,
+                    useNativeDriver: Platform.OS !== 'web',
                 }))
             ),
         ]).start()
@@ -61,7 +61,7 @@ export default function AchievementUnlockedModal({ achievements, onClose }) {
             onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <View pointerEvents="none" style={styles.confettiLayer}>
+                <View style={styles.confettiLayer}>
                     {confettiParticles.map((particle, index) => {
                         const progress = confetti[index]
                         return (
@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
     confettiLayer: {
         ...StyleSheet.absoluteFillObject,
         overflow: 'hidden',
+        pointerEvents: 'none',
     },
     confettiParticle: {
         position: 'absolute',

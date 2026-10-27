@@ -1,14 +1,13 @@
-import { View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Animated, ActivityIndicator, Image, Keyboard, Platform } from 'react-native'
-import React, { useState, useRef } from 'react'
-import styles from './styles'
+import { View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Animated, ActivityIndicator, Keyboard, Platform, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import styles from './styles';
 import { LinearGradient } from 'expo-linear-gradient';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import authService from '../../services/authService'
-import showAlert from '../../utils/showAlert'
+import authService from '../../services/authService';
+import showAlert from '../../utils/showAlert';
 
 const { height } = Dimensions.get('window');
 const DismissKeyboardView = Platform.OS === 'web' ? View : TouchableWithoutFeedback;
@@ -35,18 +34,18 @@ export default function LoginRegister({ isCheckingToken = false }) {
         setLoginError('');
         setIsLoginLoading(true);
         try {
-            const res = await authService.login(usernameLogin.trim(), passwordLogin)
+            const res = await authService.login(usernameLogin.trim(), passwordLogin);
             if (res && res.success) {
-                const { token } = res.data
-                await authService.saveAuth(token)
-                navigation.replace('Home')
+                const { token } = res.data;
+                await authService.saveAuth(token);
+                navigation.replace('Home');
             } else {
-                const msg = (res && res.message) || 'فشل تسجيل الدخول'
-                showAlert('خطأ', msg)
+                const msg = (res && res.message) || 'فشل تسجيل الدخول';
+                showAlert('خطأ', msg);
             }
         } catch (err) {
-            const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
-            showAlert('خطأ', msg)
+            const msg = err?.response?.data?.message || err.message || 'حدث خطأ';
+            showAlert('خطأ', msg);
         } finally {
             setIsLoginLoading(false);
         }
@@ -54,28 +53,29 @@ export default function LoginRegister({ isCheckingToken = false }) {
 
     const handleRegister = async () => {
         if (!usernameRegister.trim() || !passwordRegister || !confirmPasswordRegister) {
-            showAlert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة')
-            return
+            showAlert('حقل مطلوب', 'يرجى ملء جميع الحقول المطلوبة');
+            return;
         }
 
-        setIsRegisterLoading(true)
+        setIsRegisterLoading(true);
         try {
-            const res = await authService.register(usernameRegister.trim(), passwordRegister, confirmPasswordRegister)
+            const res = await authService.register(usernameRegister.trim(), passwordRegister, confirmPasswordRegister);
             if (res && res.success) {
-                const { token } = res.data
-                await authService.saveAuth(token)
-                navigation.replace('Home')
+                const { token } = res.data;
+                await authService.saveAuth(token);
+                navigation.replace('Home');
             } else {
-                const msg = (res && res.message) || 'فشل التسجيل'
-                showAlert('خطأ', msg)
+                const msg = (res && res.message) || 'فشل التسجيل';
+                showAlert('خطأ', msg);
             }
         } catch (err) {
-            const msg = err?.response?.data?.message || err.message || 'حدث خطأ'
-            showAlert('خطأ', msg)
+            const msg = err?.response?.data?.message || err.message || 'حدث خطأ';
+            showAlert('خطأ', msg);
         } finally {
-            setIsRegisterLoading(false)
+            setIsRegisterLoading(false);
         }
-    }
+    };
+
     const beforeTopAnim = useRef(new Animated.Value(0)).current;
     const togglePanelTopAnim = useRef(new Animated.Value(0)).current;
     const togglePanelBottomAnim = useRef(new Animated.Value(0)).current;
@@ -124,7 +124,7 @@ export default function LoginRegister({ isCheckingToken = false }) {
             }),
             Animated.timing(formBoxHeightAnim, {
                 toValue,
-                duration:600,
+                duration: 600,
                 delay: 1200,
                 useNativeDriver: false,
             }),
@@ -134,181 +134,266 @@ export default function LoginRegister({ isCheckingToken = false }) {
         }, 1200);
     };
 
+    const renderCardContent = () => (
+        <>
+            <Animated.View
+                style={[
+                    styles.formBox,
+                    { height: formBoxHeight },
+                ]}
+            >
+                <View style={styles.form}>
+                    {showLogin ? (
+                        <>
+                            <Text style={styles.formTitle}>تسجيل الدخول</Text>
+                            <View style={styles.inputBox}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='اسم المستخدم'
+                                    placeholderTextColor="#888888"
+                                    textAlign='right'
+                                    value={usernameLogin}
+                                    onChangeText={setUsernameLogin}
+                                    editable={!isCheckingToken}
+                                    required
+                                />
+                                <FontAwesome
+                                    name="user"
+                                    size={26}
+                                    color="rgb(136, 136, 136)"
+                                    style={[
+                                        styles.icon,
+                                        Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                                    ]}
+                                />
+                            </View>
+                            <View style={styles.inputBox}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='كلمة المرور'
+                                    placeholderTextColor="#888888"
+                                    secureTextEntry={!showPasswordLogin}
+                                    textAlign='right'
+                                    value={passwordLogin}
+                                    onChangeText={setPasswordLogin}
+                                    editable={!isCheckingToken}
+                                    required
+                                />
+                                <TouchableOpacity
+                                    style={[styles.icon, styles.interactiveIcon]}
+                                    onPress={() => setShowPasswordLogin(prev => !prev)}
+                                >
+                                    <Ionicons
+                                        name={showPasswordLogin ? "eye" : "eye-off"}
+                                        size={26}
+                                        color="rgb(136, 136, 136)"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.button}
+                                onPress={handleLogin}
+                                disabled={isCheckingToken || isLoginLoading}
+                                activeOpacity={0.8}
+                            >
+                                {isCheckingToken || isLoginLoading
+                                    ? <ActivityIndicator color="#ffffff" />
+                                    : <Text style={styles.text}>تسجيل الدخول</Text>}
+                            </TouchableOpacity>
+                            {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+                            <Text style={styles.paragraph}>صلاة يسوع القصيرة (يا ربي يسوع المسيح، ابن الله، ارحمني أنا الخاطئ) هي أمضى سلاح ضد الأفكار الشريرة. رددها باستمرار، فيهرب الشيطان ويستنير العقل.</Text>
+                        </>
+                    ) : (
+                        <>
+                            <Text style={styles.formTitle}>تسجيل</Text>
+                            <View style={styles.inputBox}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='اسم المستخدم'
+                                    placeholderTextColor="#888888"
+                                    textAlign='right'
+                                    value={usernameRegister}
+                                    onChangeText={setUsernameRegister}
+                                    required
+                                />
+                                <FontAwesome
+                                    name="user"
+                                    size={26}
+                                    color="rgb(136, 136, 136)"
+                                    style={[
+                                        styles.icon,
+                                        Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                                    ]}
+                                />
+                            </View>
+                            <View style={styles.inputBox}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='كلمة المرور'
+                                    placeholderTextColor="#888888"
+                                    secureTextEntry={!showPasswordRegister}
+                                    textAlign='right'
+                                    value={passwordRegister}
+                                    onChangeText={setPasswordRegister}
+                                    required
+                                />
+                                <TouchableOpacity
+                                    style={[styles.icon, styles.interactiveIcon]}
+                                    onPress={() => setShowPasswordRegister(prev => !prev)}
+                                >
+                                    <Ionicons
+                                        name={showPasswordRegister ? "eye" : "eye-off"}
+                                        size={26}
+                                        color="rgb(136, 136, 136)"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.inputBox}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='تأكيد كلمة المرور'
+                                    placeholderTextColor="#888888"
+                                    secureTextEntry={!showConfirmPasswordRegister}
+                                    textAlign='right'
+                                    value={confirmPasswordRegister}
+                                    onChangeText={setConfirmPasswordRegister}
+                                    required
+                                />
+                                <TouchableOpacity
+                                    style={[styles.icon, styles.interactiveIcon]}
+                                    onPress={() => setShowConfirmPasswordRegister(prev => !prev)}
+                                >
+                                    <Ionicons
+                                        name={showConfirmPasswordRegister ? "eye" : "eye-off"}
+                                        size={26}
+                                        color="rgb(136, 136, 136)"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.button}
+                                onPress={handleRegister}
+                                disabled={isRegisterLoading}
+                                activeOpacity={0.8}
+                            >
+                                {isRegisterLoading
+                                    ? <ActivityIndicator color="#ffffff" />
+                                    : <Text style={styles.text}>تسجيل</Text>}
+                            </TouchableOpacity>
+                            <Text style={styles.paragraph}>الصلاة هي أكسجين الروح، وبدونها يختنق الإنسان روحياً وسط هموم الحياة ومشاكلها.</Text>
+                        </>
+                    )}
+                </View>
+            </Animated.View>
+
+            <View
+                style={[
+                    styles.toggleBox,
+                    Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                ]}
+            >
+                <Animated.View
+                    style={[
+                        styles.before,
+                        { top: beforeTop },
+                        Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                    ]}
+                />
+                <Animated.View
+                    style={[
+                        styles.togglePanel,
+                        { top: togglePanelTop },
+                        Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                    ]}
+                >
+                    <Text style={styles.toggletitle}>
+                        فرقة القديس باييسيوس الآثوسي
+                    </Text>
+                    <Text style={styles.toggleParagraph}>
+                        الصف الثامن
+                    </Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.toggleButton,
+                            Platform.select({
+                                web: { pointerEvents: showLogin ? 'auto' : 'none' },
+                                default: {},
+                            }),
+                        ]}
+                        onPress={toggleForm}
+                        activeOpacity={0.8}
+                        disabled={isCheckingToken}
+                    >
+                        <Text style={styles.toggleTextButton}>تسجيل</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+                <Animated.View
+                    style={[
+                        styles.togglePanel,
+                        { bottom: togglePanelBottom },
+                        Platform.select({ web: { pointerEvents: 'none' }, default: {} }),
+                    ]}
+                >
+                    <Text style={styles.toggletitle}>
+                        فرقة القديس باييسيوس الآثوسي
+                    </Text>
+                    <Text style={styles.toggleParagraph}>
+                        الصف الثامن
+                    </Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.toggleButton,
+                            Platform.select({
+                                web: { pointerEvents: showLogin ? 'none' : 'auto' },
+                                default: {},
+                            }),
+                        ]}
+                        onPress={toggleForm}
+                        activeOpacity={0.8}
+                        disabled={isCheckingToken}
+                    >
+                        <Text style={styles.toggleTextButton}>تسجيل الدخول</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            </View>
+        </>
+    );
+
     return (
         <DismissKeyboardView
             onPress={Platform.OS === 'web' ? undefined : Keyboard.dismiss}
             style={{ flex: 1 }}
         >
-          <LinearGradient
-              colors={['#e2e2e2', '#c9d6ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.body}
-          >
-            <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <KeyboardAwareScrollView
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        minHeight: height - 60,
-                    }}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                >
-                        <Animated.View style={[styles.formBox, { height: formBoxHeight }]}>
-                            <View style={styles.form}>
-                                {showLogin ? (
-                                    <>
-                                        <Text style={styles.formTitle}>تسجيل الدخول</Text>
-                                        <View style={styles.inputBox}>
-                                            <TextInput 
-                                            style={styles.input} 
-                                            placeholder='اسم المستخدم' 
-                                            placeholderTextColor="#888888"
-                                            textAlign='right' 
-                                            value={usernameLogin} 
-                                            onChangeText={setUsernameLogin}
-                                            editable={!isCheckingToken}
-                                            required
-                                            />
-                                            <FontAwesome 
-                                            name="user" 
-                                            size={26} 
-                                            color="rgb(136, 136, 136)" 
-                                            style={styles.icon} 
-                                            />
-                                        </View>
-                                        <View style={styles.inputBox}>
-                                            <TextInput 
-                                            style={styles.input} 
-                                            placeholder='كلمة المرور' 
-                                            placeholderTextColor="#888888"
-                                            secureTextEntry={showPasswordLogin ? false : true} 
-                                            textAlign='right' 
-                                            value={passwordLogin} 
-                                            onChangeText={setPasswordLogin}
-                                            editable={!isCheckingToken}
-                                            required
-                                            />
-                                            <TouchableOpacity
-                                            style={styles.icon}
-                                            onPress={() => setShowPasswordLogin(prev => !prev)}>
-                                                <Ionicons 
-                                                name={showPasswordLogin ? "eye" : "eye-off"} 
-                                                size={26} 
-                                                color="rgb(136, 136, 136)" 
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <TouchableOpacity 
-                                        style={styles.button} 
-                                        onPress={handleLogin} 
-                                        disabled={isCheckingToken || isLoginLoading}
-                                        activeOpacity={0.8}
-                                        >
-                                            {isCheckingToken || isLoginLoading
-                                                ? <ActivityIndicator color="#ffffff" />
-                                                : <Text style={styles.text}>تسجيل الدخول</Text>}
-                                        </TouchableOpacity>
-                                        {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
-                                        <Text style={styles.paragraph}>صلاة يسوع القصيرة (يا ربي يسوع المسيح، ابن الله، ارحمني أنا الخاطئ) هي أمضى سلاح ضد الأفكار الشريرة. رددها باستمرار، فيهرب الشيطان ويستنير العقل.</Text>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Text style={styles.formTitle}>تسجيل</Text>
-                                        <View style={styles.inputBox}>
-                                            <TextInput 
-                                            style={styles.input} 
-                                            placeholder='اسم المستخدم' 
-                                            placeholderTextColor="#888888"
-                                            textAlign='right' 
-                                            value={usernameRegister} 
-                                            onChangeText={setUsernameRegister} 
-                                            required
-                                            />
-                                            <FontAwesome 
-                                            name="user" 
-                                            size={26} 
-                                            color="rgb(136, 136, 136)" 
-                                            style={styles.icon} 
-                                            />
-                                        </View>
-                                        <View style={styles.inputBox}>
-                                            <TextInput 
-                                            style={styles.input} 
-                                            placeholder='كلمة المرور' 
-                                            placeholderTextColor="#888888"
-                                            secureTextEntry={showPasswordRegister ? false : true} 
-                                            textAlign='right' 
-                                            value={passwordRegister} 
-                                            onChangeText={setPasswordRegister} 
-                                            required
-                                            />
-                                            <TouchableOpacity
-                                            style={styles.icon} 
-                                            onPress={() => setShowPasswordRegister(prev => !prev)}>
-                                                <Ionicons 
-                                                name={showPasswordRegister ? "eye" : "eye-off"} 
-                                                size={26} 
-                                                color="rgb(136, 136, 136)" 
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View style={styles.inputBox}>
-                                            <TextInput 
-                                            style={styles.input} 
-                                            placeholder='تأكيد كلمة المرور' 
-                                            placeholderTextColor="#888888"
-                                            secureTextEntry={showConfirmPasswordRegister ? false : true} 
-                                            textAlign='right' 
-                                            value={confirmPasswordRegister} 
-                                            onChangeText={setConfirmPasswordRegister} 
-                                            required
-                                            />
-                                            <TouchableOpacity 
-                                            style={styles.icon} 
-                                            onPress={() => setShowConfirmPasswordRegister(prev => !prev)}>
-                                                <Ionicons 
-                                                name={showConfirmPasswordRegister ? "eye" : "eye-off"} 
-                                                size={26} 
-                                                color="rgb(136, 136, 136)" 
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                        <TouchableOpacity 
-                                        style={styles.button} 
-                                        onPress={handleRegister}
-                                        disabled={isRegisterLoading}
-                                        activeOpacity={0.8}
-                                        >
-                                            {isRegisterLoading
-                                                ? <ActivityIndicator color="#ffffff" />
-                                                : <Text style={styles.text}>تسجيل</Text>}
-                                        </TouchableOpacity>
-                                        <Text style={styles.paragraph}>الصلاة هي أكسجين الروح، وبدونها يختنق الإنسان روحياً وسط هموم الحياة ومشاكلها.</Text>
-                                    </>
-                                )}
-                            </View>
-                        </Animated.View>
-                        <View style={styles.toggleBox} pointerEvents="box-none">
-                            <Animated.View style={[styles.before, { top: beforeTop }]} pointerEvents="none" />
-                            <Animated.View style={[styles.togglePanel, { top: togglePanelTop } ]}> 
-                                <Text style={styles.toggletitle}>فرقة القديس باييسيوس الآثوسي</Text>
-                                <Text style={styles.toggleParagraph}>الصف الثامن</Text>
-                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8} disabled={isCheckingToken}>
-                                    <Text style={styles.toggleTextButton}>تسجيل</Text>
-                                </TouchableOpacity>
-                            </Animated.View>
-                            <Animated.View style={[styles.togglePanel, { bottom: togglePanelBottom } ]}> 
-                                <Text style={styles.toggletitle}>فرقة القديس باييسيوس الآثوسي</Text>
-                                <Text style={styles.toggleParagraph}>الصف الثامن</Text>
-                                <TouchableOpacity style={styles.toggleButton} onPress={toggleForm} activeOpacity={0.8} disabled={isCheckingToken}>
-                                    <Text style={styles.toggleTextButton}>تسجيل الدخول</Text>
-                                </TouchableOpacity>
-                            </Animated.View>
-                        </View>
-                </KeyboardAwareScrollView>
-            </ScrollView>
-          </LinearGradient>
+            <LinearGradient
+                colors={['#e2e2e2', '#c9d6ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.body}
+            >
+                {Platform.OS === 'web' ? (
+                    <View style={styles.container}>
+                        {renderCardContent()}
+                    </View>
+                ) : (
+                    <ScrollView
+                        style={styles.container}
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <KeyboardAwareScrollView
+                            contentContainerStyle={{
+                                flexGrow: 1,
+                                minHeight: height - 60,
+                            }}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {renderCardContent()}
+                        </KeyboardAwareScrollView>
+                    </ScrollView>
+                )}
+            </LinearGradient>
         </DismissKeyboardView>
-    )
+    );
 }

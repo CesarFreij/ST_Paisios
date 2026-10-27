@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { View, Image, Animated, Easing, Text, Modal, TouchableOpacity } from 'react-native';
+import { View, Image, Animated, Easing, Text, Modal, TouchableOpacity, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import styles from './styles';
 import CustomButton from '../../../components/CustomButton/CustomButton';
@@ -65,7 +65,7 @@ export default function HomeScreen() {
             Animated.timing(snackbarAnim, {
                 toValue: 1,
                 duration: 220,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }),
         ]).start();
 
@@ -73,7 +73,7 @@ export default function HomeScreen() {
             Animated.timing(snackbarAnim, {
                 toValue: 0,
                 duration: 180,
-                useNativeDriver: true,
+                useNativeDriver: Platform.OS !== 'web',
             }).start(({ finished }) => {
                 if (finished) setSnackbar(null);
             });
@@ -308,18 +308,21 @@ export default function HomeScreen() {
     };
 
     useEffect(() => {
+        if (Platform.OS === 'web') return undefined;
+
         Animated.loop(
             Animated.sequence([
                 Animated.timing(moveAnim, {
                     toValue: -1500,
                     duration: 100000,
                     easing: Easing.linear,
-                    useNativeDriver: true,
+                    useNativeDriver: Platform.OS !== 'web',
                 }),
             ])
         ).start();
 
-    }, []);
+        return undefined;
+    }, [moveAnim]);
 
     const handleOptimisticPointsChange = (pointsDelta) => {
         const updatedPoints = (Number(pointBalanceRef.current) || 0) + pointsDelta;

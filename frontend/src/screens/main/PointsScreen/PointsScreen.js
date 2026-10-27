@@ -217,7 +217,7 @@ export default function PointsScreen() {
     );
 
     useEffect(() => {
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: Platform.OS !== 'web' }).start();
         Animated.timing(totalPointsValue, { toValue: totalPoints, duration: 1200, useNativeDriver: false }).start();
         Animated.timing(totalTasksValue, { toValue: totalTasks, duration: 1200, useNativeDriver: false }).start();
     }, [totalPoints, totalTasks]);
@@ -235,8 +235,8 @@ export default function PointsScreen() {
             bibleDayAnims.forEach((anim, index) => { if (bibleCalendar[index] && anim) anim.setValue(0); });
 
             Animated.parallel([
-                Animated.timing(prayerCardAnim, { toValue: 1, duration: 550, delay: 160, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-                Animated.timing(bibleCardAnim, { toValue: 1, duration: 550, delay: 320, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(prayerCardAnim, { toValue: 1, duration: 550, delay: 160, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
+                Animated.timing(bibleCardAnim, { toValue: 1, duration: 550, delay: 320, easing: Easing.inOut(Easing.ease), useNativeDriver: Platform.OS !== 'web' }),
                 Animated.timing(prayerProgress, { toValue: prayerRate, duration: 1200, delay: 120, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
                 Animated.timing(bibleProgress, { toValue: bibleRate, duration: 1200, delay: 240, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
                 Animated.timing(prayerGlow, { toValue: 1, duration: 1200, delay: 120, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
@@ -244,11 +244,11 @@ export default function PointsScreen() {
             ]).start();
 
             Animated.stagger(26, prayerCalendar.map((active, index) =>
-                active && prayerDayAnims[index] ? Animated.timing(prayerDayAnims[index], { toValue: 1, duration: 360, delay: 240 + index * 8, easing: Easing.out(Easing.ease), useNativeDriver: true }) : Animated.delay(0)
+                active && prayerDayAnims[index] ? Animated.timing(prayerDayAnims[index], { toValue: 1, duration: 360, delay: 240 + index * 8, easing: Easing.out(Easing.ease), useNativeDriver: Platform.OS !== 'web' }) : Animated.delay(0)
             )).start();
 
             Animated.stagger(26, bibleCalendar.map((active, index) =>
-                active && bibleDayAnims[index] ? Animated.timing(bibleDayAnims[index], { toValue: 1, duration: 360, delay: 320 + index * 8, easing: Easing.out(Easing.ease), useNativeDriver: true }) : Animated.delay(0)
+                active && bibleDayAnims[index] ? Animated.timing(bibleDayAnims[index], { toValue: 1, duration: 360, delay: 320 + index * 8, easing: Easing.out(Easing.ease), useNativeDriver: Platform.OS !== 'web' }) : Animated.delay(0)
             )).start();
         }, [prayerCalendar, bibleCalendar, prayerRate, bibleRate])
     );

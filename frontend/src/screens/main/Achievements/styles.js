@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'left',
-    direction: 'ltr',
+    ...Platform.select({ web: { writingDirection: 'ltr' }, default: { direction: 'ltr' } }),
     ...webTextAlignRight,
   },
   milestoneNameUnlocked: {
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     color: '#929dab',
     fontSize: 12,
     textAlign: 'left',
-    direction: 'ltr',
+    ...Platform.select({ web: { writingDirection: 'ltr' }, default: { direction: 'ltr' } }),
     ...webTextAlignRight,
   },
   milestoneStatus: {
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'left',
-    direction: 'ltr',
+    ...Platform.select({ web: { writingDirection: 'ltr' }, default: { direction: 'ltr' } }),
     ...webTextAlignRight,
   },
   pathHint: {

@@ -1,5 +1,5 @@
-import { StyleSheet } from "react-native";
-import { webTextAlignRight } from '../../utils/webRtlStyles'
+import { Platform, StyleSheet } from "react-native";
+import { webTextAlignRight } from '../../utils/webRtlStyles';
 
 const styles = StyleSheet.create({
     body: {
@@ -12,13 +12,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         backgroundColor: '#fff',
         borderRadius: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...Platform.select({
+            web: {
+                height: '100%',
+                width: '100%',
+                boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
+            },
+        }),
     },
     formBox: {
         justifyContent: 'center',
@@ -26,6 +35,10 @@ const styles = StyleSheet.create({
         width: '100%',
         position: 'absolute',
         zIndex: 1,
+        ...Platform.select({
+            web: { top: 0, left: 0, right: 0 },
+            default: {},
+        }),
     },
     form: {
         padding: 20,
@@ -39,19 +52,39 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgb(238, 238, 238)',
         position: 'relative',
         borderRadius: 8,
+        ...Platform.select({
+            web: {
+                paddingLeft: 50,
+                paddingRight: 20,
+            },
+            default: {},
+        }),
     },
     icon: {
         position: 'absolute',
-        end: 20,
+        ...Platform.select({
+            web: { left: 15 },
+            default: { end: 20 },
+        }),
         top: '50%',
         transform: [{ translateY: '-50%' }],
-        zIndex: 1
+        zIndex: 1,
     },
     input: {
         color: '#000000',
         paddingVertical: 16,
-        paddingStart: 20,
-        paddingEnd: 50,
+        ...Platform.select({
+            web: {
+                width: '100%',
+                outlineStyle: 'none',
+                borderWidth: 0,
+                textAlign: 'right',
+            },
+            default: {
+                paddingStart: 20,
+                paddingEnd: 50,
+            },
+        }),
         ...webTextAlignRight,
     },
     button: {
@@ -60,6 +93,10 @@ const styles = StyleSheet.create({
         padding: 15,
         alignItems: 'center',
         marginTop: 30,
+        ...Platform.select({
+            web: { cursor: 'pointer' },
+            default: {},
+        }),
     },
     text: {
         color: '#fff',
@@ -83,6 +120,10 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '100%',
         height: '100%',
+        ...Platform.select({
+            web: { top: 0, left: 0, right: 0, bottom: 0, zIndex: 5 },
+            default: {},
+        }),
     },
     togglePanel: {
         width: '100%',
@@ -91,6 +132,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2,
+        ...Platform.select({
+            web: { left: 0, right: 0 },
+            default: {},
+        }),
     },
     toggletitle: {
         color: '#fff',
@@ -100,7 +145,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 5,
-        lineHeight: 30
+        lineHeight: 30,
     },
     toggleParagraph: {
         color: '#fff',
@@ -108,7 +153,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20
+        marginBottom: 20,
     },
     toggleButton: {
         borderWidth: 2,
@@ -118,6 +163,16 @@ const styles = StyleSheet.create({
         height: 46,
         justifyContent: 'center',
         alignItems: 'center',
+        ...Platform.select({
+            web: { cursor: 'pointer' },
+            default: {},
+        }),
+    },
+    interactiveIcon: {
+        ...Platform.select({
+            web: { zIndex: 10, cursor: 'pointer', pointerEvents: 'auto' },
+            default: {},
+        }),
     },
     toggleTextButton: {
         color: '#fff',
@@ -132,12 +187,12 @@ const styles = StyleSheet.create({
         start: 0,
         backgroundColor: 'rgb(116, 148, 236)',
         borderRadius: 75,
-        zIndex: 0
+        zIndex: Platform.select({ web: 1, default: 2 }),
+        ...Platform.select({
+            web: { left: 0, right: 0 },
+            default: {},
+        }),
     },
-
-    // Register Section
-
-
 });
 
 export default styles;
